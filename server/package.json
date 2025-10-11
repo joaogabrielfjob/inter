@@ -1,0 +1,27 @@
+{
+  "name": "server",
+  "main": "index.js",
+  "module": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "bun run --watch src/index.ts",
+    "build": "bun build ./src/index.ts --production --compile --target bun --outfile server --minify-whitespace --minify-syntax",
+    "start": "bun run ./build/index.js",
+    "db:deploy": "bun prisma migrate deploy",
+    "db:generate": "bun prisma generate"
+  },
+  "private": true,
+  "dependencies": {
+    "@elysiajs/cors": "^1.4.0",
+    "@prisma/client": "^6.17.1",
+    "@types/node": "^24.7.1",
+    "elysia": "^1.4.10"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "prisma": "^6.17.1"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}

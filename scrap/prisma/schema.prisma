@@ -1,0 +1,24 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Match {
+  id         Int      @id @default(autoincrement())
+  home       String
+  homeScore  Int      @map("home_score")
+  homeEmblem String   @map("home_emblem")
+  away       String
+  awayScore  Int      @map("away_score")
+  awayEmblem String   @map("away_emblem")
+  date       DateTime
+  league     String
+  status     String
+
+  @@unique([home, away, date])
+  @@map("match")
+}
