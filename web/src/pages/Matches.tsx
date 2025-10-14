@@ -6,7 +6,7 @@ import { MatchStatus } from '@/enums/match_status';
 
 export function Matches() {
   const { data: matches, fetchStatus } = useQuery({
-    queryKey: ['matches'],
+    queryKey: ['upcoming'],
     queryFn: async () => await fetchMatches({ status: MatchStatus.UPCOMING, order: 'ASC' })
   })
 

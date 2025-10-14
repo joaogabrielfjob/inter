@@ -36,7 +36,7 @@ export function Results() {
   })
 
   const { data: matches, fetchStatus: matchesState, refetch } = useQuery({
-    queryKey: ['matches'],
+    queryKey: ['finished'],
     queryFn: async () => await fetchMatches({ status, order, year, month, league, team })
   })
 
