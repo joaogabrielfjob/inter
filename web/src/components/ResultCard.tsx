@@ -31,7 +31,7 @@ export function ResultCard({ date, home, home_score, home_emblem, away, away_sco
             <p className='flex-1 whitespace-nowrap px-3 pt-1.5 text-center text-sm uppercase'>X</p>
             <p className='w-1/3 text-right text-2xl font-bold'>{away_score}</p>
           </div>
-          <p className='h-4'>{new Date(date).toLocaleDateString('pt-BR', { day: 'numeric', month: 'numeric', year: '2-digit' })}</p>
+          <p className='h-4'>{date.toLocaleDateString('pt-BR', { day: 'numeric', month: 'numeric', year: '2-digit', timeZone: 'UTC' })}</p>
         </div>
 
         <div className='flex m-auto flex-col w-20 h-17 items-center'>

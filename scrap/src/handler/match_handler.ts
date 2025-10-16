@@ -1,7 +1,7 @@
 import { Browser } from 'puppeteer'
+import { MatchStatus } from '../enums/match_status'
 import { parseDate } from '../lib/parse_date'
 import { matchService } from '../services/match_service'
-import { MatchStatus } from '../enums/match_status'
 
 const url = (type: 'calendario' | 'resultados') => {
   return `https://www.espn.com.br/futebol/time/${type}/_/id/1936/bra.internacional`
@@ -54,7 +54,7 @@ export const matchHandler = {
 
     const promises = []
     for (const match of matches) {
-      const parsedDate = parseDate(match.date, '')
+      const parsedDate = parseDate(match.date)
 
       if (!parsedDate) continue
 
@@ -122,7 +122,7 @@ export const matchHandler = {
 
     const promises = []
     for (const match of matches) {
-      const parsedDate = parseDate(match.date, match.time)
+      const parsedDate = parseDate(match.date)
 
       if (!parsedDate) continue
 
@@ -138,7 +138,8 @@ export const matchHandler = {
         awayScore: 0,
         awayEmblem: awayEmblem,
         championship: match.league,
-        status: MatchStatus.UPCOMING
+        status: MatchStatus.UPCOMING,
+        time: match.time
       })
 
       promises.push(promise)

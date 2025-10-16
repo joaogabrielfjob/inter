@@ -14,4 +14,5 @@ export type Match = {
   date: Date;
   league: string;
   status: string;
+  time?: string;
 }

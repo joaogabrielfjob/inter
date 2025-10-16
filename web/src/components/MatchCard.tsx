@@ -2,11 +2,10 @@ import { Match } from '../types';
 
 export type MatchCardProps = Match
 
-export function MatchCard({ date, home, home_emblem: homeEmblem, away, away_emblem: awayEmblem, league }: MatchCardProps) {
+export function MatchCard({ date, home, home_emblem: homeEmblem, away, away_emblem: awayEmblem, league, time }: MatchCardProps) {
   const isHome = home === 'Internacional';
   const colors = isHome ? 'bg-red-500 text-white' : 'bg-white';
   const stadium = isHome ? 'Estádio Beira-Rio' : 'Fora de casa';
-  const time = new Date(date).toLocaleTimeString('pt-BR', { hour: 'numeric', minute: 'numeric' });
 
   return (
     <div className={`flex flex-col h-full shadow-lg shadow-red-500/50 rounded-lg gap-7 ${colors}`}>
@@ -27,8 +26,8 @@ export function MatchCard({ date, home, home_emblem: homeEmblem, away, away_embl
         </div>
 
         <div className='flex m-auto flex-col items-center pt-2 font-light'>
-          <p className='h-4'>{new Date(date).toLocaleDateString('pt-BR', { day: 'numeric', month: 'numeric', year: '2-digit' })}</p>
-          <p className='h-4'>{time !== '00:00' ? time : 'A definir' }</p>
+          <p className='h-4'>{date.toLocaleDateString('pt-BR', { day: 'numeric', month: 'numeric', year: '2-digit', timeZone: 'UTC' })}</p>
+          <p className='h-4'>{time}</p>
         </div>
 
         <div className='flex m-auto flex-col w-20 h-17 items-center'>

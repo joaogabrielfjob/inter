@@ -8,15 +8,15 @@ function dateParser(_: string, value: string) {
   return value;
 }
 
-export function transformDates(data: unknown) {
-  if (data && typeof data === 'string') {
+export function transformDates(date: unknown) {
+  if (date && typeof date === 'string') {
     try {
-      return JSON.parse(data, dateParser);
+      return JSON.parse(date, dateParser);
     } catch {
-      console.error('Failed to parse JSON string:', data);
-      return data;
+      console.error('Failed to parse JSON string:', date);
+      return date;
     }
   }
 
-  return data;
+  return date;
 }

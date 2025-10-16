@@ -1,4 +1,4 @@
-export const parseDate = (date: string, time: string) => {
+export const parseDate = (date: string) => {
   const monthMap = {
     'jan.': 0,
     'fev.': 1,
@@ -25,13 +25,6 @@ export const parseDate = (date: string, time: string) => {
   if (month === undefined) return undefined
 
   const year = new Date().getFullYear()
-  
-  let [hour, minute] = time.split(':')
 
-  if (!hour || !minute) {
-    hour = '0'
-    minute = '0'
-  }
-
-  return new Date(year, monthIndex, day, Number(hour), Number(minute), 0, 0)
+  return new Date(Date.UTC(year, monthIndex, day, 0, 0, 0, 0))
 }

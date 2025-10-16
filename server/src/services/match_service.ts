@@ -38,7 +38,7 @@ export const matchService = {
   }
 }
 
-const conditions = (status: string, year?: string, month?: string, league?: string, team?: string) => {
+const conditions = (status: string, year?: string, month?: string, league?: string, team?: string): Prisma.Sql => {
   const conditions: Prisma.Sql[] = []
 
   const byStatus = Prisma.sql`status = ${status}`

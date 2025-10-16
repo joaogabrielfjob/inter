@@ -18,6 +18,7 @@ model Match {
   date       DateTime
   league     String
   status     String
+  time       String?
 
   @@unique([home, away, date])
   @@map("match")

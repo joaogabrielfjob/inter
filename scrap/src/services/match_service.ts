@@ -11,6 +11,7 @@ interface CreateRequest {
   awayEmblem: string
   championship: string
   status: MatchStatus
+  time?: string
 }
 
 export const matchService = {
@@ -28,7 +29,8 @@ export const matchService = {
         homeEmblem: request.homeEmblem,
         awayScore: request.awayScore,
         awayEmblem: request.awayEmblem,
-        status: request.status
+        status: request.status,
+        time: request.time
       },
       create: {
         home: request.homeTeam,
@@ -39,7 +41,8 @@ export const matchService = {
         awayEmblem: request.awayEmblem,
         date: request.date,
         league: request.championship,
-        status: request.status
+        status: request.status,
+        time: request.time
       }
     })
 
