@@ -26,7 +26,10 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
-    }
+    },
+
+    /* Bun */
+    "types": ["bun"]
   },
   "include": ["src"]
 }
