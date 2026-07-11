@@ -29,7 +29,7 @@
     },
 
     /* Bun */
-    "types": ["bun"]
+    "types": ["bun", "vitest/globals"]
   },
   "include": ["src"]
 }

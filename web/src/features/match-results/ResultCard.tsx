@@ -1,4 +1,4 @@
-import { Match } from '../types';
+import { Match } from '@/types';
 
 export type ResultCardProps = Match
 
