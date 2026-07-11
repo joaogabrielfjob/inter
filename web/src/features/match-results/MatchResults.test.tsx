@@ -1,9 +1,10 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router-dom';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
+import userEvent from '@testing-library/user-event';
 import { MatchResults } from './MatchResults';
 
 const server = setupServer(
@@ -37,7 +38,10 @@ const server = setupServer(
 );
 
 beforeAll(() => server.listen({ onUnhandledRequest: 'error' }));
-afterEach(() => server.resetHandlers());
+afterEach(() => {
+  server.resetHandlers();
+  cleanup();
+});
 afterAll(() => server.close());
 
 function renderMatchResults(initialEntry: string) {
@@ -76,5 +80,25 @@ describe('MatchResults', () => {
     renderMatchResults('/resultados');
 
     expect(await screen.findByText('Não foi possível carregar os resultados.')).toBeInTheDocument();
+  });
+
+  it('retries a failed Match Results Search', async () => {
+    let attempts = 0;
+    server.use(
+      http.get('*/matches', () => {
+        attempts += 1;
+        if (attempts === 1) return new HttpResponse(null, { status: 500 });
+        return HttpResponse.json({ status: 'success', matches: [{
+          id: 1, home: 'Internacional', home_score: 2, home_emblem: 'home.png', away: 'Grêmio', away_score: 1, away_emblem: 'away.png', date: '2025-04-12T00:00:00.000Z', league: 'Brasileirão', status: 'FINISHED',
+        }] });
+      }),
+    );
+    renderMatchResults('/resultados?ano=2025');
+    await screen.findByText('Não foi possível carregar os resultados.');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Tentar novamente' }));
+
+    expect((await screen.findAllByText('Internacional')).length).toBeGreaterThan(0);
+    expect(attempts).toBe(2);
   });
 });
