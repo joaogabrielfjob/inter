@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "bun run src/index.ts",
-    "build": "bun build ./src/index.ts --production --compile --target bun --outfile server --minify",
+    "build": "bun prisma generate && bun build ./src/index.ts --production --compile --target bun --outfile server --minify",
     "start": "bun run ./build/index.js",
     "db:deploy": "bun prisma migrate deploy",
     "db:generate": "bun prisma generate"
