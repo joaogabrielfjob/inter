@@ -4,5 +4,7 @@ const fallback = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" v
 
 export function TeamEmblem({ src, name }: { src?: string; name: string }) {
   const [failed, setFailed] = useState(false);
-  return <img src={!src || failed ? fallback : src} alt={`${name} emblem`} className='h-12' onError={() => setFailed(true)} />;
+  const resolvedSrc = !src || failed ? fallback : new URL(src, import.meta.env.VITE_API_URL).toString();
+
+  return <img src={resolvedSrc} alt={`${name} emblem`} className='h-12' onError={() => setFailed(true)} />;
 }

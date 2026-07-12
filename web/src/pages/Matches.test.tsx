@@ -12,7 +12,7 @@ const server = setupServer(
       id: 1,
       home: 'Internacional',
       homeScore: 0,
-      homeEmblem: 'home.png',
+      homeEmblem: '/team-emblems/home.png',
       away: 'Grêmio',
       awayScore: 0,
       awayEmblem: 'away.png',
@@ -43,7 +43,7 @@ describe('Matches', () => {
     expect(await screen.findByText('Internacional')).toBeInTheDocument();
     expect(screen.getByText('12/04/25')).toBeInTheDocument();
     expect(screen.getByText('18:30')).toBeInTheDocument();
-    expect(screen.getByRole('img', { name: 'Internacional emblem' })).toHaveAttribute('src', 'home.png');
+    expect(screen.getByRole('img', { name: 'Internacional emblem' })).toHaveAttribute('src', 'http://localhost:3000/team-emblems/home.png');
   });
 
   it('uses a neutral mark when a Team has no retained Emblem', async () => {
