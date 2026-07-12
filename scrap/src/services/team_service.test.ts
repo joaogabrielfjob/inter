@@ -44,4 +44,17 @@ describe('teamService.resolve', () => {
 
     await expect(teamService.resolve({ name: 'Grêmio', espnTeamId: 456 })).resolves.toMatchObject({ team: { id: 8 } })
   })
+
+  it('keeps a Team name when ESPN presents a name already owned by another Team', async () => {
+    const team = { id: 238, name: 'Clube A', espnTeamId: 238, aliases: [] }
+    findUnique.mockResolvedValue(team)
+    update.mockRejectedValueOnce({ code: 'P2002' }).mockResolvedValue(undefined)
+
+    await expect(teamService.resolve({ name: 'Clube B', espnTeamId: 238 })).resolves.toMatchObject({ team: { id: 238, name: 'Clube A' } })
+
+    expect(update).toHaveBeenLastCalledWith({
+      where: { id: 238 },
+      data: { espnTeamId: 238, aliases: { push: 'Clube B' } },
+    })
+  })
 })

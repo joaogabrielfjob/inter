@@ -14,15 +14,27 @@ export const teamService = {
     const { team, alreadyExisted } = await findOrCreateTeam(input)
 
     if (alreadyExisted && (team.name !== input.name || (!team.espnTeamId && input.espnTeamId))) {
-      await prisma.team.update({
-        where: { id: team.id },
-        data: {
-          name: input.name,
-          espnTeamId: team.espnTeamId ?? input.espnTeamId,
-          aliases: team.name === input.name ? undefined : { push: team.name },
-        },
-      })
-      team.name = input.name
+      try {
+        await prisma.team.update({
+          where: { id: team.id },
+          data: {
+            name: input.name,
+            espnTeamId: team.espnTeamId ?? input.espnTeamId,
+            aliases: team.name === input.name ? undefined : { push: team.name },
+          },
+        })
+        team.name = input.name
+      } catch (error) {
+        if (!isUniqueConstraintViolation(error)) throw error
+
+        await prisma.team.update({
+          where: { id: team.id },
+          data: {
+            espnTeamId: team.espnTeamId ?? input.espnTeamId,
+            aliases: team.aliases.includes(input.name) ? undefined : { push: input.name },
+          },
+        })
+      }
       team.espnTeamId ??= input.espnTeamId ?? null
     }
 

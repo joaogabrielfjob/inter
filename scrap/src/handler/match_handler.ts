@@ -5,20 +5,22 @@ import { matchService } from '../services/match_service'
 import { espnTeamIdFromLink } from '../lib/espn_team_identity'
 import { teamEmblemUrl } from '../lib/team_emblem_url'
 
-const url = (type: 'calendario' | 'resultados') => {
-  return `https://www.espn.com.br/futebol/time/${type}/_/id/1936/bra.internacional`
+const url = (type: 'calendario' | 'resultados', season?: number) => {
+  const teamUrl = `https://www.espn.com.br/futebol/time/${type}/_/id/1936`
+  return season ? `${teamUrl}/temporada/${season}` : `${teamUrl}/bra.internacional`
 }
 
 export const matchHandler = {
-  scrapeFinishedMatches: async (browser: Browser) => {
+  scrapeFinishedMatches: async (browser: Browser, season?: number) => {
     const page = await browser.newPage()
 
-    await page.goto(url('resultados'), { waitUntil: 'networkidle0' })
+    await page.goto(url('resultados', season), { waitUntil: 'networkidle0' })
 
-    const matches = await page.evaluate(() => {
+    const { matches, skippedRows } = await page.evaluate(() => {
       const rows = Array.from(document.querySelectorAll('.Table__TR.Table__TR--sm.Table__even'))
       
-      const response = []
+      const matches = []
+      const skippedRows = []
 
       for (const row of rows) {
         const columns = row.querySelectorAll('td')
@@ -31,7 +33,10 @@ export const matchHandler = {
           columns[5]?.innerText.trim()
         ]
 
-        if (!date || !home || !score || !away || !league) continue
+        if (!date || !home || !score || !away || !league) {
+          skippedRows.push(row.textContent?.trim() ?? '')
+          continue
+        }
 
         const [homeScore, awayScore] = score.split('-').map(s => parseInt(s.trim(), 10))
         const homeEmblem = emblems?.[0]?.src
@@ -39,9 +44,12 @@ export const matchHandler = {
         const homeLink = columns[1]?.querySelector('a')?.href
         const awayLink = columns[3]?.querySelector('a')?.href
 
-        if (homeScore === undefined || awayScore === undefined) continue
+        if (homeScore === undefined || awayScore === undefined || Number.isNaN(homeScore) || Number.isNaN(awayScore)) {
+          skippedRows.push(row.textContent?.trim() ?? '')
+          continue
+        }
 
-        response.push({
+        matches.push({
           date,
           home,
           homeScore,
@@ -55,14 +63,17 @@ export const matchHandler = {
         })
       }
       
-      return response
+      return { matches, skippedRows }
     })
 
     const promises = []
     for (const match of matches) {
-      const parsedDate = parseDate(match.date)
+      const parsedDate = parseDate(match.date, season)
 
-      if (!parsedDate) continue
+      if (!parsedDate) {
+        skippedRows.push(match.date)
+        continue
+      }
 
       const promise = matchService.upsertMatch({
         date: parsedDate,
@@ -78,6 +89,38 @@ export const matchHandler = {
     }
 
     await Promise.all(promises)
+
+    if (season && skippedRows.length) {
+      throw new Error(`Skipped ${skippedRows.length} invalid row(s) while ingesting ESPN season ${season}: ${skippedRows.join(' | ')}`)
+    }
+  },
+  discoverFinishedMatchSeasons: async (browser: Browser) => {
+    const page = await browser.newPage()
+
+    await page.goto(url('resultados'), { waitUntil: 'networkidle0' })
+
+    const discovered = await page.evaluate(() => {
+      const seasonFromOption = (option: HTMLOptionElement) => {
+        const seasonInUrl = option.value.match(/\/temporada\/(19|20)\d{2}/)
+        if (seasonInUrl) return parseInt(seasonInUrl[0].replace('/temporada/', ''), 10)
+
+        return /^(19|20)\d{2}$/.test(option.value) ? parseInt(option.value, 10) : undefined
+      }
+
+      const select = Array.from(document.querySelectorAll('select')).find((candidate) =>
+        Array.from(candidate.options).some((option) => seasonFromOption(option) !== undefined)
+      )
+      if (!select) return undefined
+
+      const seasons = Array.from(select.options).map(seasonFromOption).filter((season): season is number => season !== undefined)
+      const activeSeason = Array.from(select.options).find((option) => option.selected)
+      const active = activeSeason ? seasonFromOption(activeSeason) : undefined
+
+      return active === undefined || seasons.length === 0 ? undefined : { activeSeason: active, seasons }
+    })
+
+    if (!discovered) throw new Error('Could not reliably discover ESPN season options and active season')
+    return discovered
   },
   scrapeUpcomingMatches: async (browser: Browser) => {
     const page = await browser.newPage()

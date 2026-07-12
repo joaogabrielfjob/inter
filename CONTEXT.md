@@ -51,3 +51,11 @@ _Avoid_: team image, logo, badge, crest
 **ESPN Team ID**:
 The numeric identifier in ESPN's explicit Team link, used to recognize a Team during ESPN ingestion.
 _Avoid_: emblem URL ID, team name key
+
+**Current Season Ingestion**:
+The routine refresh that retrieves Internacional's current completed Matches and Fixtures from ESPN.
+_Avoid_: historical import, full backfill
+
+**Historical Season Ingestion**:
+A separate, on-demand routine that retrieves completed Matches from every prior ESPN season available for Internacional.
+_Avoid_: current refresh, full backfill

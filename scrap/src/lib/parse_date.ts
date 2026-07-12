@@ -1,4 +1,4 @@
-export const parseDate = (date: string) => {
+export const parseDate = (date: string, fallbackYear = new Date().getFullYear()) => {
   const monthMap = {
     'jan.': 0,
     'fev.': 1,
@@ -22,9 +22,10 @@ export const parseDate = (date: string) => {
   const month = match[2].toLowerCase()
   const monthIndex = monthMap[month as keyof typeof monthMap]
 
-  if (month === undefined) return undefined
+  if (monthIndex === undefined) return undefined
 
-  const year = new Date().getFullYear()
+  const explicitYear = date.match(/\b(?:19|20)\d{2}\b/)
+  const year = explicitYear ? parseInt(explicitYear[0], 10) : fallbackYear
 
   return new Date(Date.UTC(year, monthIndex, day, 0, 0, 0, 0))
 }

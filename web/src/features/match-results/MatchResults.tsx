@@ -83,7 +83,7 @@ function MatchResultsContent({ confirmedSearch, setSearchParams }: MatchResultsC
         <div className='w-47'>
           <ComboBox data={filters.teams} placeholder='Times' value={draftSearch.team ?? ''} onChange={updateDraft('team')} />
         </div>
-        <div className='w-50'>
+        <div className='w-57'>
           <Select data={filters.leagues} placeholder='Campeonato' value={draftSearch.league ?? ''} onChange={updateDraft('league')} />
         </div>
         <Button aria-label='Buscar resultados' size='icon' className='h-10 w-10 cursor-pointer bg-red-500 text-white hover:bg-red-600' onClick={search}>
