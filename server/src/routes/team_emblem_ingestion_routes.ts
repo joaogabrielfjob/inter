@@ -22,10 +22,13 @@ export const teamEmblemIngestionRoutes = new Elysia()
     const current = await prisma.teamEmblem.findFirst({ where: { teamId, isCurrent: true } })
     const retained = await storage.retain(new Uint8Array(await request.arrayBuffer()), mimeType, current ?? undefined, String(teamId))
     if (current?.contentHash === retained.contentHash) return { status: 'success', retained: false }
+    const previous = await prisma.teamEmblem.findFirst({ where: { path: retained.path } })
 
     await prisma.$transaction([
       prisma.teamEmblem.updateMany({ where: { teamId, isCurrent: true }, data: { isCurrent: false, replacedAt: new Date() } }),
-      prisma.teamEmblem.create({ data: { teamId, ...retained } }),
+      previous
+        ? prisma.teamEmblem.update({ where: { id: previous.id }, data: { teamId, ...retained, isCurrent: true, replacedAt: null } })
+        : prisma.teamEmblem.create({ data: { teamId, ...retained } }),
     ])
     return { status: 'success', retained: true }
   })

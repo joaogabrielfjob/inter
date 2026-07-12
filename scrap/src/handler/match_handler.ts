@@ -3,6 +3,7 @@ import { MatchStatus } from '../enums/match_status'
 import { parseDate } from '../lib/parse_date'
 import { matchService } from '../services/match_service'
 import { espnTeamIdFromLink } from '../lib/espn_team_identity'
+import { teamEmblemUrl } from '../lib/team_emblem_url'
 
 const url = (type: 'calendario' | 'resultados') => {
   return `https://www.espn.com.br/futebol/time/${type}/_/id/1936/bra.internacional`
@@ -65,9 +66,9 @@ export const matchHandler = {
 
       const promise = matchService.upsertMatch({
         date: parsedDate,
-        homeTeam: { name: match.home, espnTeamId: espnTeamIdFromLink(match.homeLink), emblemUrl: match.homeEmblem },
+        homeTeam: { name: match.home, espnTeamId: espnTeamIdFromLink(match.homeLink), emblemUrl: teamEmblemUrl(match.homeEmblem) },
         homeScore: match.homeScore,
-        awayTeam: { name: match.away, espnTeamId: espnTeamIdFromLink(match.awayLink), emblemUrl: match.awayEmblem },
+        awayTeam: { name: match.away, espnTeamId: espnTeamIdFromLink(match.awayLink), emblemUrl: teamEmblemUrl(match.awayEmblem) },
         awayScore: match.awayScore,
         championship: match.league,
         status: MatchStatus.FINISHED
@@ -130,9 +131,9 @@ export const matchHandler = {
 
       const promise = matchService.upsertMatch({
         date: parsedDate,
-        homeTeam: { name: match.home, espnTeamId: espnTeamIdFromLink(match.homeLink), emblemUrl: match.homeEmblem },
+        homeTeam: { name: match.home, espnTeamId: espnTeamIdFromLink(match.homeLink), emblemUrl: teamEmblemUrl(match.homeEmblem) },
         homeScore: 0,
-        awayTeam: { name: match.away, espnTeamId: espnTeamIdFromLink(match.awayLink), emblemUrl: match.awayEmblem },
+        awayTeam: { name: match.away, espnTeamId: espnTeamIdFromLink(match.awayLink), emblemUrl: teamEmblemUrl(match.awayEmblem) },
         awayScore: 0,
         championship: match.league,
         status: MatchStatus.UPCOMING,

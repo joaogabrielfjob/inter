@@ -11,12 +11,9 @@ const storage = new TeamEmblemStorage()
 
 export const teamService = {
   async resolve(input: ScrapedTeam) {
-    const team = await findTeam(input)
-    const resolved = team ?? await prisma.team.create({
-      data: { name: input.name, espnTeamId: input.espnTeamId },
-    })
+    const { team, alreadyExisted } = await findOrCreateTeam(input)
 
-    if (team && (team.name !== input.name || (!team.espnTeamId && input.espnTeamId))) {
+    if (alreadyExisted && (team.name !== input.name || (!team.espnTeamId && input.espnTeamId))) {
       await prisma.team.update({
         where: { id: team.id },
         data: {
@@ -25,19 +22,37 @@ export const teamService = {
           aliases: team.name === input.name ? undefined : { push: team.name },
         },
       })
-      resolved.name = input.name
-      resolved.espnTeamId ??= input.espnTeamId ?? null
+      team.name = input.name
+      team.espnTeamId ??= input.espnTeamId ?? null
     }
 
-    const emblemRetained = input.emblemUrl ? await refreshEmblem(resolved.id, input.emblemUrl) : undefined
-    return { team: resolved, emblemRetained }
+    const emblemRetained = input.emblemUrl ? await refreshEmblem(team.id, input.emblemUrl) : undefined
+    return { team, emblemRetained }
   },
+}
+
+async function findOrCreateTeam(input: ScrapedTeam) {
+  const existing = await findTeam(input)
+  if (existing) return { team: existing, alreadyExisted: true }
+
+  try {
+    return {
+      team: await prisma.team.create({ data: { name: input.name, espnTeamId: input.espnTeamId } }),
+      alreadyExisted: false,
+    }
+  } catch (error) {
+    if (!isUniqueConstraintViolation(error)) throw error
+
+    const concurrent = await findTeam(input)
+    if (!concurrent) throw error
+    return { team: concurrent, alreadyExisted: true }
+  }
 }
 
 async function findTeam(input: ScrapedTeam) {
   if (input.espnTeamId) {
     const byEspnId = await prisma.team.findUnique({ where: { espnTeamId: input.espnTeamId } })
-    return byEspnId
+    if (byEspnId) return byEspnId
   }
 
   const team = await prisma.team.findFirst({
@@ -45,6 +60,10 @@ async function findTeam(input: ScrapedTeam) {
   })
   if (!input.espnTeamId) console.warn(`ESPN Team ID unavailable; used name/alias fallback for ${input.name}`)
   return team
+}
+
+function isUniqueConstraintViolation(error: unknown): boolean {
+  return typeof error === 'object' && error !== null && (error as { code?: unknown }).code === 'P2002'
 }
 
 async function refreshEmblem(teamId: number, sourceUrl: string): Promise<boolean> {

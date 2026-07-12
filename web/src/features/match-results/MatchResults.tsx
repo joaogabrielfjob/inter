@@ -1,8 +1,8 @@
+import { Button } from '@/components/ui/button';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { SearchIcon } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { type SetURLSearchParams, useSearchParams } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
+import { useSearchParams, type SetURLSearchParams } from 'react-router-dom';
 import { ComboBox } from './ComboBox';
 import { ResultCard } from './ResultCard';
 import { Select } from './Select';
@@ -83,7 +83,7 @@ function MatchResultsContent({ confirmedSearch, setSearchParams }: MatchResultsC
         <div className='w-47'>
           <ComboBox data={filters.teams} placeholder='Times' value={draftSearch.team ?? ''} onChange={updateDraft('team')} />
         </div>
-        <div className='w-47'>
+        <div className='w-50'>
           <Select data={filters.leagues} placeholder='Campeonato' value={draftSearch.league ?? ''} onChange={updateDraft('league')} />
         </div>
         <Button aria-label='Buscar resultados' size='icon' className='h-10 w-10 cursor-pointer bg-red-500 text-white hover:bg-red-600' onClick={search}>

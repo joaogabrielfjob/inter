@@ -12,8 +12,6 @@ const server = new Elysia()
 server
   .error('INVARIANT_ERROR', InvariantError)
   .onError(({ code, error, set }) => {
-    console.error(error)
-
     switch (code) {
       case 'VALIDATION':
         set.status = 400
@@ -27,12 +25,13 @@ server
           status: 'error',
           message: 'Resource not found'
         }
-      case 'INTERNAL_SERVER_ERROR':
-        set.status = 500
-        return {
-          status: 'error',
-          message: 'Something went wrong'
-        }
+    }
+
+    console.error(error)
+    set.status = 500
+    return {
+      status: 'error',
+      message: 'Something went wrong'
     }
   })
 
