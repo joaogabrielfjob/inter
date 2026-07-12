@@ -7,10 +7,10 @@ export type Match = {
   id: number;
   home: string;
   homeScore: number;
-  homeEmblem: string;
+  homeEmblem?: string;
   away: string;
   awayScore: number;
-  awayEmblem: string;
+  awayEmblem?: string;
   matchDay: string;
   league: string;
   kickoffTime?: string;

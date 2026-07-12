@@ -43,5 +43,17 @@ describe('Matches', () => {
     expect(await screen.findByText('Internacional')).toBeInTheDocument();
     expect(screen.getByText('12/04/25')).toBeInTheDocument();
     expect(screen.getByText('18:30')).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Internacional emblem' })).toHaveAttribute('src', 'home.png');
+  });
+
+  it('uses a neutral mark when a Team has no retained Emblem', async () => {
+    server.use(http.get('*/matches', () => HttpResponse.json({
+      status: 'success', matches: [{ id: 1, home: 'Internacional', homeScore: 0, away: 'Grêmio', awayScore: 0, matchDay: '2025-04-12', league: 'Brasileirão' }],
+    })));
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(<QueryClientProvider client={queryClient}><Matches /></QueryClientProvider>);
+
+    expect(await screen.findByText('Grêmio')).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Grêmio emblem' }).getAttribute('src')).toContain('data:image/svg+xml');
   });
 });

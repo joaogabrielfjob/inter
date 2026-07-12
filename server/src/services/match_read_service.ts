@@ -1,4 +1,4 @@
-import { Prisma, type Match } from '@prisma/client'
+import { Prisma } from '@prisma/client'
 import type { Combo } from '../common/combo'
 import { MatchStatus } from '../enums/match_status'
 import { prisma } from '../lib/prisma'
@@ -7,10 +7,10 @@ export type MatchRead = {
   id: number
   home: string
   homeScore: number
-  homeEmblem: string
+  homeEmblem?: string
   away: string
   awayScore: number
-  awayEmblem: string
+  awayEmblem?: string
   matchDay: string
   league: string
   kickoffTime?: string
@@ -39,8 +39,17 @@ const months: Combo[] = [
 export const matchReadService = {
   list: async ({ status, order, year, month, league, team }: MatchReadQuery): Promise<MatchRead[]> => {
     const where = conditions(status, year, month, league, team)
-    const query = Prisma.sql`SELECT * FROM match ${where} ORDER BY date ${Prisma.raw(order)}`
-    const matches = await prisma.$queryRaw<Match[]>(query)
+    const query = Prisma.sql`
+      SELECT match.id, match.home_score AS "homeScore", match.away_score AS "awayScore", match.date, match.league, match.time,
+        home_team.name AS home_team_name, away_team.name AS away_team_name,
+        home_emblem.path AS home_emblem_path, away_emblem.path AS away_emblem_path
+      FROM match
+      LEFT JOIN team AS home_team ON home_team.id = match.home_team_id
+      LEFT JOIN team AS away_team ON away_team.id = match.away_team_id
+      LEFT JOIN team_emblem AS home_emblem ON home_emblem.team_id = home_team.id AND home_emblem.is_current = true
+      LEFT JOIN team_emblem AS away_emblem ON away_emblem.team_id = away_team.id AND away_emblem.is_current = true
+      ${where} ORDER BY match.date ${Prisma.raw(order)}`
+    const matches = await prisma.$queryRaw<MatchRow[]>(query)
 
     return matches.map(toMatchRead)
   },
@@ -53,9 +62,13 @@ export const matchReadService = {
         ORDER BY year DESC
       `,
       prisma.$queryRaw<{ team: string }[]>`
-        SELECT DISTINCT home AS team FROM match WHERE status = ${MatchStatus.FINISHED}
+        SELECT DISTINCT home_team.name AS team
+        FROM match LEFT JOIN team AS home_team ON home_team.id = match.home_team_id
+        WHERE status = ${MatchStatus.FINISHED}
         UNION
-        SELECT DISTINCT away AS team FROM match WHERE status = ${MatchStatus.FINISHED}
+        SELECT DISTINCT away_team.name AS team
+        FROM match LEFT JOIN team AS away_team ON away_team.id = match.away_team_id
+        WHERE status = ${MatchStatus.FINISHED}
         ORDER BY team ASC
       `,
       prisma.match.findMany({
@@ -75,15 +88,22 @@ export const matchReadService = {
   },
 }
 
-function toMatchRead(match: Match): MatchRead {
+type MatchRow = {
+  id: number; homeScore: number; awayScore: number
+  date: Date; league: string; time: string | null
+  home_team_name: string | null; away_team_name: string | null
+  home_emblem_path: string | null; away_emblem_path: string | null
+}
+
+function toMatchRead(match: MatchRow): MatchRead {
   return {
     id: match.id,
-    home: match.home,
+    home: match.home_team_name!,
     homeScore: match.homeScore,
-    homeEmblem: match.homeEmblem,
-    away: match.away,
+    homeEmblem: match.home_emblem_path ?? undefined,
+    away: match.away_team_name!,
     awayScore: match.awayScore,
-    awayEmblem: match.awayEmblem,
+    awayEmblem: match.away_emblem_path ?? undefined,
     matchDay: match.date.toISOString().slice(0, 10),
     league: match.league,
     ...(match.time ? { kickoffTime: match.time } : {}),
@@ -96,7 +116,10 @@ function conditions(status: MatchStatus, year?: string, month?: string, league?:
   if (year) filters.push(Prisma.sql`EXTRACT(YEAR FROM date) = ${year}::integer`)
   if (month) filters.push(Prisma.sql`EXTRACT(MONTH FROM date) = ${month}::integer`)
   if (league) filters.push(Prisma.sql`UPPER(UNACCENT(league)) = UPPER(UNACCENT(${league}))`)
-  if (team) filters.push(Prisma.sql`(UPPER(UNACCENT(home)) = UPPER(UNACCENT(${team})) OR UPPER(UNACCENT(away)) = UPPER(UNACCENT(${team})))`)
+  if (team) filters.push(Prisma.sql`(
+    UPPER(UNACCENT(home_team.name)) = UPPER(UNACCENT(${team}))
+    OR UPPER(UNACCENT(away_team.name)) = UPPER(UNACCENT(${team}))
+  )`)
 
   return Prisma.sql`WHERE ${Prisma.join(filters, ' AND ')}`
 }

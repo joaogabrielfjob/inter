@@ -9,17 +9,46 @@ datasource db {
 
 model Match {
   id         Int      @id @default(autoincrement())
-  home       String
   homeScore  Int      @map("home_score")
-  homeEmblem String   @map("home_emblem")
-  away       String
   awayScore  Int      @map("away_score")
-  awayEmblem String   @map("away_emblem")
   date       DateTime
   league     String
   status     String
   time       String?
+  homeTeamId Int      @map("home_team_id")
+  awayTeamId Int      @map("away_team_id")
+  homeTeam   Team     @relation("HomeTeam", fields: [homeTeamId], references: [id])
+  awayTeam   Team     @relation("AwayTeam", fields: [awayTeamId], references: [id])
 
-  @@unique([home, away, date])
+  @@unique([homeTeamId, awayTeamId, date])
   @@map("match")
+}
+
+model Team {
+  id          Int          @id @default(autoincrement())
+  name        String
+  espnTeamId  Int?         @unique @map("espn_team_id")
+  aliases     String[]     @default([])
+  emblems     TeamEmblem[]
+  homeMatches Match[]      @relation("HomeTeam")
+  awayMatches Match[]      @relation("AwayTeam")
+
+  @@unique([name])
+  @@map("team")
+}
+
+model TeamEmblem {
+  id          Int      @id @default(autoincrement())
+  teamId      Int      @map("team_id")
+  path        String   @unique
+  contentHash String   @map("content_hash")
+  mimeType    String   @map("mime_type")
+  isCurrent   Boolean  @default(true) @map("is_current")
+  replacedAt  DateTime? @map("replaced_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+  team        Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@index([teamId, isCurrent])
+  @@index([isCurrent, replacedAt])
+  @@map("team_emblem")
 }

@@ -2,6 +2,7 @@ import { Browser } from 'puppeteer'
 import { MatchStatus } from '../enums/match_status'
 import { parseDate } from '../lib/parse_date'
 import { matchService } from '../services/match_service'
+import { espnTeamIdFromLink } from '../lib/espn_team_identity'
 
 const url = (type: 'calendario' | 'resultados') => {
   return `https://www.espn.com.br/futebol/time/${type}/_/id/1936/bra.internacional`
@@ -29,20 +30,24 @@ export const matchHandler = {
           columns[5]?.innerText.trim()
         ]
 
-        if (!date || !home || !score || !emblems || !away || !league) continue
+        if (!date || !home || !score || !away || !league) continue
 
         const [homeScore, awayScore] = score.split('-').map(s => parseInt(s.trim(), 10))
-        const homeEmblem = emblems[0]?.src.split('.png')[0]
-        const awayEmblem = emblems[1]?.src.split('.png')[0]
+        const homeEmblem = emblems?.[0]?.src
+        const awayEmblem = emblems?.[1]?.src
+        const homeLink = columns[1]?.querySelector('a')?.href
+        const awayLink = columns[3]?.querySelector('a')?.href
 
-        if (homeScore === undefined || !homeEmblem || awayScore === undefined || !awayEmblem) continue
+        if (homeScore === undefined || awayScore === undefined) continue
 
         response.push({
           date,
           home,
           homeScore,
+          homeLink,
           homeEmblem,
           away,
+          awayLink,
           awayScore,
           awayEmblem,
           league
@@ -58,17 +63,12 @@ export const matchHandler = {
 
       if (!parsedDate) continue
 
-      const homeEmblem = match.homeEmblem + '.png&h=100&w=100'
-      const awayEmblem = match.awayEmblem + '.png&h=100&w=100'
-
       const promise = matchService.upsertMatch({
         date: parsedDate,
-        homeTeam: match.home,
+        homeTeam: { name: match.home, espnTeamId: espnTeamIdFromLink(match.homeLink), emblemUrl: match.homeEmblem },
         homeScore: match.homeScore,
-        homeEmblem: homeEmblem,
-        awayTeam: match.away,
+        awayTeam: { name: match.away, espnTeamId: espnTeamIdFromLink(match.awayLink), emblemUrl: match.awayEmblem },
         awayScore: match.awayScore,
-        awayEmblem: awayEmblem,
         championship: match.league,
         status: MatchStatus.FINISHED
       })
@@ -99,18 +99,20 @@ export const matchHandler = {
           columns[5]?.innerText.trim()
         ]
 
-        if (!date || !home || !emblems || !away || !league || !time) continue
+        if (!date || !home || !away || !league || !time) continue
         
-        const homeEmblem = emblems[0]?.src.split('.png')[0]
-        const awayEmblem = emblems[1]?.src.split('.png')[0]
-
-        if (!homeEmblem || !awayEmblem) continue
+        const homeEmblem = emblems?.[0]?.src
+        const awayEmblem = emblems?.[1]?.src
+        const homeLink = columns[1]?.querySelector('a')?.href
+        const awayLink = columns[3]?.querySelector('a')?.href
 
         response.push({
           date,
           home,
+          homeLink,
           homeEmblem,
           away,
+          awayLink,
           awayEmblem,
           time,
           league
@@ -126,17 +128,12 @@ export const matchHandler = {
 
       if (!parsedDate) continue
 
-      const homeEmblem = match.homeEmblem + '.png&h=100&w=100'
-      const awayEmblem = match.awayEmblem + '.png&h=100&w=100'
-
       const promise = matchService.upsertMatch({
         date: parsedDate,
-        homeTeam: match.home,
+        homeTeam: { name: match.home, espnTeamId: espnTeamIdFromLink(match.homeLink), emblemUrl: match.homeEmblem },
         homeScore: 0,
-        homeEmblem: homeEmblem,
-        awayTeam: match.away,
+        awayTeam: { name: match.away, espnTeamId: espnTeamIdFromLink(match.awayLink), emblemUrl: match.awayEmblem },
         awayScore: 0,
-        awayEmblem: awayEmblem,
         championship: match.league,
         status: MatchStatus.UPCOMING,
         time: match.time

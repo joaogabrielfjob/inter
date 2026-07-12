@@ -1,5 +1,6 @@
 import { Match } from '@/types';
 import { formatMatchDay } from '@/utils/formatMatchDay';
+import { TeamEmblem } from '@/components/TeamEmblem';
 
 export type ResultCardProps = Match
 
@@ -22,7 +23,7 @@ export function ResultCard({ matchDay, home, homeScore, homeEmblem, away, awaySc
 
       <main className='flex'>
         <div className='flex m-auto flex-col w-20 h-17 items-center'>
-          <img src={homeEmblem} className='h-12' />
+          <TeamEmblem src={homeEmblem} name={home} />
           <p className='text-center text-base/3 pt-2'>{home}</p>
         </div>
 
@@ -36,7 +37,7 @@ export function ResultCard({ matchDay, home, homeScore, homeEmblem, away, awaySc
         </div>
 
         <div className='flex m-auto flex-col w-20 h-17 items-center'>
-          <img src={awayEmblem} className='h-12' />
+          <TeamEmblem src={awayEmblem} name={away} />
           <p className='text-center text-base/4 pt-2'>{away}</p>
         </div>
       </main>
