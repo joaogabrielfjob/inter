@@ -72,6 +72,17 @@ describe('MatchResults', () => {
     });
   });
 
+  it('clears Match Results Filters from the toolbar and retrieves the unfiltered search', async () => {
+    renderMatchResults('/resultados?ano=2025');
+
+    await screen.findByText('Internacional');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Limpar filtros' }));
+
+    expect(await screen.findByText('Nenhum jogo encontrado.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Limpar filtros' })).toBeInTheDocument();
+  });
+
   it('replaces the screen with an error when Match Results Filter Options cannot load', async () => {
     server.use(
       http.get('*/matches/filters', () => new HttpResponse(null, { status: 500 })),

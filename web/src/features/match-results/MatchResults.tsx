@@ -80,12 +80,13 @@ function MatchResultsContent({ confirmedSearch, setSearchParams }: MatchResultsC
         <div className='w-21'>
           <Select data={filters.months} placeholder='Mês' value={draftSearch.month ?? ''} onChange={updateDraft('month')} />
         </div>
-        <div className='w-47'>
+        <div className='w-51'>
           <ComboBox data={filters.teams} placeholder='Times' value={draftSearch.team ?? ''} onChange={updateDraft('team')} />
         </div>
         <div className='w-57'>
           <Select data={filters.leagues} placeholder='Campeonato' value={draftSearch.league ?? ''} onChange={updateDraft('league')} />
         </div>
+        <Button variant='outline' size='lg' className='cursor-pointer' onClick={clear}>Limpar filtros</Button>
         <Button aria-label='Buscar resultados' size='icon' className='h-10 w-10 cursor-pointer bg-red-500 text-white hover:bg-red-600' onClick={search}>
           <SearchIcon />
         </Button>
@@ -97,7 +98,6 @@ function MatchResultsContent({ confirmedSearch, setSearchParams }: MatchResultsC
         {matches.length ? matches.map((match) => <ResultCard key={match.id} {...match} />) : (
           <div className='flex flex-col items-center justify-center gap-4'>
             <span className='text-xl'>Nenhum jogo encontrado.</span>
-            <Button variant='outline' onClick={clear}>Limpar filtros</Button>
           </div>
         )}
       </div>

@@ -32,6 +32,10 @@ _Avoid_: filter draft, live query
 A Match Results Search with no optional Match Results Filters, showing all completed matches from newest to oldest.
 _Avoid_: reset state, initial page
 
+**Clear Match Results Filters**:
+The always-available supporter action that discards both drafted and confirmed Match Results Filters and returns to an Unfiltered Match Results Search.
+_Avoid_: reset state, cancel search
+
 **Match Results Filter Options**:
 The independently selectable values drawn from completed Matches for Match Results Filters. An option remains available even when its combination with other filters has no Match Results.
 _Avoid_: dependent filters, cascading filters
