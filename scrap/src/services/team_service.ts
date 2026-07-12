@@ -48,24 +48,45 @@ async function findTeam(input: ScrapedTeam) {
 }
 
 async function refreshEmblem(teamId: number, sourceUrl: string): Promise<boolean> {
-  const current = await prisma.teamEmblem.findFirst({ where: { teamId, isCurrent: true } })
   try {
     const response = await fetch(sourceUrl)
     if (!response.ok) throw new Error(`download returned ${response.status}`)
     const mimeType = response.headers.get('content-type')?.split(';')[0] ?? 'image/png'
     if (!mimeType.startsWith('image/')) throw new Error(`unexpected emblem content type ${mimeType}`)
-    const retained = await storage.retain(new Uint8Array(await response.arrayBuffer()), mimeType, current ?? undefined, String(teamId))
-    if (current?.contentHash === retained.contentHash) return true
-
-    await prisma.$transaction([
-      prisma.teamEmblem.updateMany({ where: { teamId, isCurrent: true }, data: { isCurrent: false, replacedAt: new Date() } }),
-      prisma.teamEmblem.create({ data: { teamId, ...retained } }),
-    ])
-    return true
+    const content = new Uint8Array(await response.arrayBuffer())
+    return process.env.INTER_SERVER_URL
+      ? await retainWithServer(teamId, content, mimeType)
+      : await retainLocally(teamId, content, mimeType)
   } catch (error) {
     console.warn(`Could not refresh Team Emblem for team ${teamId}; keeping the last known-good emblem`, error)
     return false
   }
+}
+
+async function retainWithServer(teamId: number, content: Uint8Array, mimeType: string): Promise<boolean> {
+  if (!process.env.TEAM_EMBLEM_TOKEN) throw new Error('TEAM_EMBLEM_TOKEN is required when INTER_SERVER_URL is configured')
+  const response = await fetch(`${process.env.INTER_SERVER_URL}/internal/teams/${teamId}/emblem`, {
+    method: 'POST',
+    headers: {
+      'content-type': mimeType,
+      'x-team-emblem-ingest-token': process.env.TEAM_EMBLEM_TOKEN,
+    },
+    body: content.buffer as ArrayBuffer,
+  })
+  if (!response.ok) throw new Error(`server retention returned ${response.status}`)
+  return true
+}
+
+async function retainLocally(teamId: number, content: Uint8Array, mimeType: string): Promise<boolean> {
+  const current = await prisma.teamEmblem.findFirst({ where: { teamId, isCurrent: true } })
+  const retained = await storage.retain(content, mimeType, current ?? undefined, String(teamId))
+  if (current?.contentHash === retained.contentHash) return true
+
+  await prisma.$transaction([
+    prisma.teamEmblem.updateMany({ where: { teamId, isCurrent: true }, data: { isCurrent: false, replacedAt: new Date() } }),
+    prisma.teamEmblem.create({ data: { teamId, ...retained } }),
+  ])
+  return true
 }
 
 export const teamEmblemRefresh = { refreshEmblem }

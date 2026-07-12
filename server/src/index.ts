@@ -4,6 +4,7 @@ import { InvariantError } from './exceptions/invariant_error'
 import { matchRoutes } from './routes/match_routes'
 import { teamEmblemRoutes } from './routes/team_emblem_routes'
 import { teamEmblemMaintenanceRoutes } from './routes/team_emblem_maintenance_routes'
+import { teamEmblemIngestionRoutes } from './routes/team_emblem_ingestion_routes'
 import cors from '@elysiajs/cors'
 
 const server = new Elysia()
@@ -47,6 +48,7 @@ server
   .use(matchRoutes)
   .use(teamEmblemRoutes)
   .use(teamEmblemMaintenanceRoutes)
+  .use(teamEmblemIngestionRoutes)
   .listen(process.env.BUN_PORT ?? 3000)
 
 console.info(
