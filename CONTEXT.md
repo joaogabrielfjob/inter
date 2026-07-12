@@ -39,3 +39,15 @@ _Avoid_: dependent filters, cascading filters
 **Fixture**:
 A scheduled match that has not yet been completed.
 _Avoid_: upcoming result
+
+**Team**:
+A football club that appears as the home or away participant in a Match. Its current canonical name is displayed for every Match in which it participates.
+_Avoid_: club, side
+
+**Team Emblem**:
+The visual mark that identifies a Team and is shared by every Match involving that Team.
+_Avoid_: team image, logo, badge, crest
+
+**ESPN Team ID**:
+The numeric identifier in ESPN's explicit Team link, used to recognize a Team during ESPN ingestion.
+_Avoid_: emblem URL ID, team name key

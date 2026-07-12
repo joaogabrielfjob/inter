@@ -1,4 +1,5 @@
--- Run only after `bun run backfill:teams` reports no unresolved records.
+-- This migration is intentionally guarded: run the Team backfill and resolve its
+-- report before it can remove the legacy Match ownership fields.
 DO $$
 BEGIN
   IF EXISTS (SELECT 1 FROM "match" WHERE "home_team_id" IS NULL OR "away_team_id" IS NULL) THEN

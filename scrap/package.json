@@ -8,8 +8,7 @@
     "build": "bun build ./src/index.ts --production --compile --target bun --outfile server --minify",
     "start": "bun run ./build/index.js",
     "db:deploy": "bun prisma migrate deploy",
-    "db:generate": "bun prisma generate",
-    "backfill:teams": "bun run src/scripts/backfill_legacy_matches.ts"
+    "db:generate": "bun prisma generate"
   },
   "private": true,
   "dependencies": {
