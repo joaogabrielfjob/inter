@@ -1,6 +1,5 @@
 import type { MatchStatus } from '../enums/match_status'
-import { matchService } from '../services/match_service'
-import type { Combo } from '../common/combo'
+import { matchReadService } from '../services/match_read_service'
 
 interface schema {
   status: MatchStatus
@@ -14,7 +13,7 @@ interface schema {
 
 export const matchHandler = {
   getMatches: async (params: schema) => {
-    const matches = await matchService.getMatches(params)
+    const matches = await matchReadService.list(params)
 
     return {
       status: 'success',
@@ -22,24 +21,12 @@ export const matchHandler = {
     }
   },
   filters: async () => {
-    const filters = await matchService.filters()
-
-    const teams: Combo[] = []
-    const leagues: Combo[] = []
-
-    for (const { team } of filters.teams) {
-      teams.push({ value: team, label: team})
-    }
-
-    for (const { league } of filters.leagues) {
-      leagues.push({ value: league, label: league})
-    }
+    const filters = await matchReadService.matchResultsFilterCatalogue()
 
     return {
       status: 'success',
       filters: {
-        teams,
-        leagues
+        ...filters,
       }
     }
   }

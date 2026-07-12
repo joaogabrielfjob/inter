@@ -43,7 +43,7 @@ server.use(
 
 server
   .use(matchRoutes)
-  .listen(process.env.BUN_PORT)
+  .listen(process.env.BUN_PORT ?? 3000)
 
 console.info(
   `🦊 Elysia is running at ${server.server?.hostname}:${server.server?.port}`

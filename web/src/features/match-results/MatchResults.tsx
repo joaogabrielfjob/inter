@@ -3,8 +3,6 @@ import { SearchIcon } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { type SetURLSearchParams, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { generateMonths } from '@/utils/monthUtils';
-import { generateYears } from '@/utils/yearUtils';
 import { ComboBox } from './ComboBox';
 import { ResultCard } from './ResultCard';
 import { Select } from './Select';
@@ -77,10 +75,10 @@ function MatchResultsContent({ confirmedSearch, setSearchParams }: MatchResultsC
     <div className='container mx-auto py-12'>
       <div className='container mx-auto flex flex-row flex-wrap justify-center gap-7 py-12 lg:justify-end'>
         <div className='w-21'>
-          <Select data={generateYears()} placeholder='Ano' value={draftSearch.year ?? ''} onChange={updateDraft('year')} />
+          <Select data={filters.years} placeholder='Ano' value={draftSearch.year ?? ''} onChange={updateDraft('year')} />
         </div>
         <div className='w-21'>
-          <Select data={generateMonths()} placeholder='Mês' value={draftSearch.month ?? ''} onChange={updateDraft('month')} />
+          <Select data={filters.months} placeholder='Mês' value={draftSearch.month ?? ''} onChange={updateDraft('month')} />
         </div>
         <div className='w-47'>
           <ComboBox data={filters.teams} placeholder='Times' value={draftSearch.team ?? ''} onChange={updateDraft('team')} />

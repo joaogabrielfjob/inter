@@ -6,8 +6,8 @@ const schema = t.Object({
   status: t.Enum(MatchStatus),
   order: t.Union([t.Literal('ASC'), t.Literal('DESC')]),
 
-  year: t.Optional(t.String()),
-  month: t.Optional(t.String()),
+  year: t.Optional(t.String({ pattern: '^\\d{4}$' })),
+  month: t.Optional(t.String({ pattern: '^(?:[1-9]|1[0-2])$' })),
   league: t.Optional(t.String()),
   team: t.Optional(t.String())
 })

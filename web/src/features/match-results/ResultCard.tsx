@@ -1,8 +1,9 @@
 import { Match } from '@/types';
+import { formatMatchDay } from '@/utils/formatMatchDay';
 
 export type ResultCardProps = Match
 
-export function ResultCard({ date, home, home_score, home_emblem, away, away_score, away_emblem, league }: ResultCardProps) {
+export function ResultCard({ matchDay, home, homeScore, homeEmblem, away, awayScore, awayEmblem, league }: ResultCardProps) {
   const isHome = home === 'Internacional';
   const colors = isHome ? 'bg-red-500 text-white' : 'bg-white';
   const stadium = isHome ? 'Estádio Beira-Rio' : 'Fora de casa';
@@ -21,21 +22,21 @@ export function ResultCard({ date, home, home_score, home_emblem, away, away_sco
 
       <main className='flex'>
         <div className='flex m-auto flex-col w-20 h-17 items-center'>
-          <img src={home_emblem} className='h-12' />
+          <img src={homeEmblem} className='h-12' />
           <p className='text-center text-base/3 pt-2'>{home}</p>
         </div>
 
         <div className='flex m-auto flex-col items-center pt-2 font-light'>
           <div className='flex justify-between'>
-            <p className='w-1/3 text-left text-2xl font-bold'>{home_score}</p>
+            <p className='w-1/3 text-left text-2xl font-bold'>{homeScore}</p>
             <p className='flex-1 whitespace-nowrap px-3 pt-1.5 text-center text-sm uppercase'>X</p>
-            <p className='w-1/3 text-right text-2xl font-bold'>{away_score}</p>
+            <p className='w-1/3 text-right text-2xl font-bold'>{awayScore}</p>
           </div>
-          <p className='h-4'>{date.toLocaleDateString('pt-BR', { day: 'numeric', month: 'numeric', year: '2-digit', timeZone: 'UTC' })}</p>
+          <p className='h-4'>{formatMatchDay(matchDay)}</p>
         </div>
 
         <div className='flex m-auto flex-col w-20 h-17 items-center'>
-          <img src={away_emblem} className='h-12' />
+          <img src={awayEmblem} className='h-12' />
           <p className='text-center text-base/4 pt-2'>{away}</p>
         </div>
       </main>

@@ -1,5 +1,3 @@
-import { YEARS } from '@/constants/yearRange';
-
 export type MatchResultsSearch = {
   year?: string;
   month?: string;
@@ -30,7 +28,7 @@ export function isMatchResultsSearch(search: MatchResultsSearch | null): search 
 function readSearch(searchParams: URLSearchParams): MatchResultsSearch | null {
   for (const [key, value] of searchParams) {
     if (!searchParameterNames.has(key) || searchParams.getAll(key).length !== 1) return null;
-    if (key === 'ano' && !YEARS.includes(value)) return null;
+    if (key === 'ano' && !/^\d{4}$/.test(value)) return null;
     if (key === 'mes' && !/^([1-9]|1[0-2])$/.test(value)) return null;
   }
 

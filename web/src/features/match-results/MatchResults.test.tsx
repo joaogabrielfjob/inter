@@ -10,7 +10,7 @@ import { MatchResults } from './MatchResults';
 const server = setupServer(
   http.get('*/matches/filters', () => HttpResponse.json({
     status: 'success',
-    filters: { teams: [], leagues: [] },
+    filters: { years: [], months: [], teams: [], leagues: [] },
   })),
   http.get('*/matches', ({ request }) => {
     const url = new URL(request.url);
@@ -24,14 +24,13 @@ const server = setupServer(
       matches: [{
         id: 1,
         home: 'Internacional',
-        home_score: 2,
-        home_emblem: 'home.png',
+        homeScore: 2,
+        homeEmblem: 'home.png',
         away: 'Grêmio',
-        away_score: 1,
-        away_emblem: 'away.png',
-        date: '2025-04-12T00:00:00.000Z',
+        awayScore: 1,
+        awayEmblem: 'away.png',
+        matchDay: '2025-04-12',
         league: 'Brasileirão',
-        status: 'FINISHED',
       }],
     });
   }),
@@ -89,7 +88,7 @@ describe('MatchResults', () => {
         attempts += 1;
         if (attempts === 1) return new HttpResponse(null, { status: 500 });
         return HttpResponse.json({ status: 'success', matches: [{
-          id: 1, home: 'Internacional', home_score: 2, home_emblem: 'home.png', away: 'Grêmio', away_score: 1, away_emblem: 'away.png', date: '2025-04-12T00:00:00.000Z', league: 'Brasileirão', status: 'FINISHED',
+          id: 1, home: 'Internacional', homeScore: 2, homeEmblem: 'home.png', away: 'Grêmio', awayScore: 1, awayEmblem: 'away.png', matchDay: '2025-04-12', league: 'Brasileirão',
         }] });
       }),
     );

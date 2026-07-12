@@ -1,8 +1,9 @@
 import { Match } from '../types';
+import { formatMatchDay } from '@/utils/formatMatchDay';
 
 export type MatchCardProps = Match
 
-export function MatchCard({ date, home, home_emblem: homeEmblem, away, away_emblem: awayEmblem, league, time }: MatchCardProps) {
+export function MatchCard({ matchDay, home, homeEmblem, away, awayEmblem, league, kickoffTime }: MatchCardProps) {
   const isHome = home === 'Internacional';
   const colors = isHome ? 'bg-red-500 text-white' : 'bg-white';
   const stadium = isHome ? 'Estádio Beira-Rio' : 'Fora de casa';
@@ -26,8 +27,8 @@ export function MatchCard({ date, home, home_emblem: homeEmblem, away, away_embl
         </div>
 
         <div className='flex m-auto flex-col items-center pt-2 font-light'>
-          <p className='h-4'>{date.toLocaleDateString('pt-BR', { day: 'numeric', month: 'numeric', year: '2-digit', timeZone: 'UTC' })}</p>
-          <p className='h-4'>{time}</p>
+          <p className='h-4'>{formatMatchDay(matchDay)}</p>
+          <p className='h-4'>{kickoffTime}</p>
         </div>
 
         <div className='flex m-auto flex-col w-20 h-17 items-center'>

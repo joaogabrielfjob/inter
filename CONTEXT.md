@@ -4,6 +4,18 @@ This context presents Internacional's fixtures and completed matches. It keeps t
 
 ## Language
 
+**Match**:
+A football contest between a home team and an away team, whether scheduled or completed.
+_Avoid_: game
+
+**Match Day**:
+The calendar day on which a Match is scheduled or was completed. It is independent of a time zone.
+_Avoid_: timestamp, datetime
+
+**Kickoff Time**:
+The optional local clock time at which a Match begins.
+_Avoid_: timestamp, datetime
+
 **Match Results**:
 The collection of completed matches and the criteria used to browse them.
 _Avoid_: results page, finished-games feature
@@ -21,7 +33,7 @@ A Match Results Search with no optional Match Results Filters, showing all compl
 _Avoid_: reset state, initial page
 
 **Match Results Filter Options**:
-The independently selectable values for Match Results Filters. An option remains available even when its combination with other filters has no Match Results.
+The independently selectable values drawn from completed Matches for Match Results Filters. An option remains available even when its combination with other filters has no Match Results.
 _Avoid_: dependent filters, cascading filters
 
 **Fixture**:

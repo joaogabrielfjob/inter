@@ -6,13 +6,12 @@ export type Combo = {
 export type Match = {
   id: number;
   home: string;
-  home_score: number;
-  home_emblem: string;
+  homeScore: number;
+  homeEmblem: string;
   away: string;
-  away_score: number;
-  away_emblem: string;
-  date: Date;
+  awayScore: number;
+  awayEmblem: string;
+  matchDay: string;
   league: string;
-  status: string;
-  time?: string;
+  kickoffTime?: string;
 }

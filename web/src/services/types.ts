@@ -12,6 +12,8 @@ export type FetchFiltersResponse = {
 }
 
 export type Filters = {
+  years: Combo[];
+  months: Combo[];
   teams: Combo[];
   leagues: Combo[];
 }
