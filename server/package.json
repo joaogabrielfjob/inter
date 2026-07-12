@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "bun run --watch src/index.ts",
-    "build": "bun build ./src/index.ts --production --compile --target bun --outfile server --minify-whitespace --minify-syntax",
+    "build": "bun prisma generate && bun build ./src/index.ts --production --compile --target bun --outfile server --minify-whitespace --minify-syntax",
     "start": "bun run ./build/index.js",
     "cleanup:team-emblems": "bun run src/scripts/run_team_emblem_cleanup.ts",
     "db:deploy": "bun prisma migrate deploy",
