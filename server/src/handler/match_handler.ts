@@ -4,6 +4,7 @@ import { matchReadService } from '../services/match_read_service'
 interface schema {
   status: MatchStatus
   order: 'ASC' | 'DESC'
+  cursor?: string
 
   year?: string
   month?: string
@@ -13,11 +14,11 @@ interface schema {
 
 export const matchHandler = {
   getMatches: async (params: schema) => {
-    const matches = await matchReadService.list(params)
+    const page = await matchReadService.list(params)
 
     return {
       status: 'success',
-      matches: matches
+      ...page,
     }
   },
   filters: async () => {

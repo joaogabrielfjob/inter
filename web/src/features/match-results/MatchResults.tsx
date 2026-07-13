@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { SearchIcon } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams, type SetURLSearchParams } from 'react-router-dom';
 import { ComboBox } from './ComboBox';
 import { ResultCard } from './ResultCard';
@@ -35,6 +35,8 @@ type MatchResultsContentProps = {
 function MatchResultsContent({ confirmedSearch, setSearchParams }: MatchResultsContentProps) {
   const [previousConfirmedSearch, setPreviousConfirmedSearch] = useState(confirmedSearch);
   const [draftSearch, setDraftSearch] = useState<MatchResultsSearch>(confirmedSearch);
+  const previousSearchRef = useRef(confirmedSearch);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
 
   if (confirmedSearch !== previousConfirmedSearch) {
     setPreviousConfirmedSearch(confirmedSearch);
@@ -45,13 +47,32 @@ function MatchResultsContent({ confirmedSearch, setSearchParams }: MatchResultsC
     queryKey: ['match-results-filters'],
     queryFn: fetchMatchResultsFilters,
   });
-  const resultsQuery = useQuery({
+  const resultsQuery = useInfiniteQuery({
     queryKey: ['match-results', confirmedSearch],
-    queryFn: () => fetchMatchResults(confirmedSearch),
-    placeholderData: keepPreviousData,
+    queryFn: ({ pageParam }) => fetchMatchResults(confirmedSearch, pageParam),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.nextCursor,
   });
+  const { fetchNextPage, hasNextPage, isFetchingNextPage, isFetchNextPageError } = resultsQuery;
 
-  if (filtersQuery.isError || resultsQuery.isError) {
+  useEffect(() => {
+    if (previousSearchRef.current !== confirmedSearch) window.scrollTo({ top: 0 });
+    previousSearchRef.current = confirmedSearch;
+  }, [confirmedSearch]);
+
+  useEffect(() => {
+    const target = loadMoreRef.current;
+    if (!target || !hasNextPage || isFetchingNextPage || isFetchNextPageError) return;
+
+    const observer = new IntersectionObserver((entries) => {
+      if (entries.some((entry) => entry.isIntersecting)) void fetchNextPage();
+    }, { rootMargin: '0px 0px 100%' });
+    observer.observe(target);
+
+    return () => observer.disconnect();
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage, isFetchNextPageError]);
+
+  if (filtersQuery.isError || (resultsQuery.isError && !resultsQuery.data)) {
     return <RequestError onRetry={() => void Promise.all([filtersQuery.refetch(), resultsQuery.refetch()])} />;
   }
 
@@ -59,7 +80,7 @@ function MatchResultsContent({ confirmedSearch, setSearchParams }: MatchResultsC
     return <Loading />;
   }
 
-  const matches = resultsQuery.data ?? [];
+  const matches = resultsQuery.data?.pages.flatMap((page) => page.matches) ?? [];
   const filters = filtersQuery.data;
 
   const updateDraft = (key: keyof MatchResultsSearch) => (value: string) => {
@@ -92,8 +113,6 @@ function MatchResultsContent({ confirmedSearch, setSearchParams }: MatchResultsC
         </Button>
       </div>
 
-      {resultsQuery.isFetching && <p className='text-center text-sm text-muted-foreground'>Buscando resultados…</p>}
-
       <div className={matches.length ? 'container mx-auto grid grid-cols-(--auto-fill) gap-5 py-12' : 'flex min-h-[60vh] w-full flex-1 items-center justify-center py-24'}>
         {matches.length ? matches.map((match) => <ResultCard key={match.id} {...match} />) : (
           <div className='flex flex-col items-center justify-center gap-4'>
@@ -101,6 +120,14 @@ function MatchResultsContent({ confirmedSearch, setSearchParams }: MatchResultsC
           </div>
         )}
       </div>
+      {matches.length > 0 && !resultsQuery.hasNextPage && <p className='pb-12 text-center text-sm text-muted-foreground'>Todos os resultados foram carregados.</p>}
+      {resultsQuery.isFetchNextPageError && (
+        <div className='flex flex-col items-center gap-3 pb-12'>
+          <p className='text-sm text-muted-foreground'>Não foi possível carregar mais resultados.</p>
+          <Button variant='outline' onClick={() => void resultsQuery.fetchNextPage()}>Tentar novamente</Button>
+        </div>
+      )}
+      {resultsQuery.hasNextPage && <div ref={loadMoreRef} aria-hidden='true' />}
     </div>
   );
 }

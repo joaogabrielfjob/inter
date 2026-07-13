@@ -5,6 +5,7 @@ import { MatchStatus } from '../enums/match_status'
 const schema = t.Object({
   status: t.Enum(MatchStatus),
   order: t.Union([t.Literal('ASC'), t.Literal('DESC')]),
+  cursor: t.Optional(t.String()),
 
   year: t.Optional(t.String({ pattern: '^\\d{4}$' })),
   month: t.Optional(t.String({ pattern: '^(?:[1-9]|1[0-2])$' })),

@@ -8,6 +8,10 @@ Use Conventional Commits: `type(optional-scope): concise imperative description`
 - Add a scope only when the change is confined to one component (for example, `web`, `server`, or `scrap`); omit it for cross-component changes.
 - Keep the description lowercase and do not end it with punctuation.
 
+## Handoffs and commits
+
+After completing an implementation, report in chat that it is ready for the user's review and testing. Do not create a commit unless the user explicitly asks for one.
+
 ### Issue tracker
 
 Issues live as local Markdown files under `.scratch/`. See `docs/agents/issue-tracker.md`.

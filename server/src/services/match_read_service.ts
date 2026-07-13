@@ -19,10 +19,16 @@ export type MatchRead = {
 export type MatchReadQuery = {
   status: MatchStatus
   order: 'ASC' | 'DESC'
+  cursor?: string
   year?: string
   month?: string
   league?: string
   team?: string
+}
+
+export type MatchReadPage = {
+  matches: MatchRead[]
+  nextCursor?: string
 }
 
 export type MatchResultsFilterCatalogue = {
@@ -38,8 +44,11 @@ const months: Combo[] = [
 ].map((label, index) => ({ value: String(index + 1), label }))
 
 export const matchReadService = {
-  list: async ({ status, order, year, month, league, team }: MatchReadQuery): Promise<MatchRead[]> => {
-    const where = conditions(status, year, month, league, team)
+  list: async ({ status, order, cursor: encodedCursor, year, month, league, team }: MatchReadQuery): Promise<MatchReadPage> => {
+    const isMatchResults = status === MatchStatus.FINISHED
+    const resultOrder = isMatchResults ? 'DESC' : order
+    const cursor = encodedCursor ? decodeCursor(encodedCursor) : undefined
+    const where = conditions(status, resultOrder, cursor, year, month, league, team)
     const query = Prisma.sql`
       SELECT match.id, match.home_score AS "homeScore", match.away_score AS "awayScore", match.date, match.league, match.time,
         home_team.name AS home_team_name, away_team.name AS away_team_name,
@@ -49,10 +58,15 @@ export const matchReadService = {
       LEFT JOIN team AS away_team ON away_team.id = match.away_team_id
       LEFT JOIN team_emblem AS home_emblem ON home_emblem.team_id = home_team.id AND home_emblem.is_current = true
       LEFT JOIN team_emblem AS away_emblem ON away_emblem.team_id = away_team.id AND away_emblem.is_current = true
-      ${where} ORDER BY match.date ${Prisma.raw(order)}`
+      ${where} ORDER BY match.date ${Prisma.raw(resultOrder)}${isMatchResults ? Prisma.sql`, match.id ${Prisma.raw(resultOrder)}` : Prisma.empty}
+      ${isMatchResults ? Prisma.sql`LIMIT 21` : Prisma.empty}`
     const matches = await prisma.$queryRaw<MatchRow[]>(query)
+    const page = (isMatchResults ? matches.slice(0, 20) : matches).map(toMatchRead)
 
-    return matches.map(toMatchRead)
+    return {
+      matches: page,
+      ...(isMatchResults && matches.length > 20 ? { nextCursor: encodeCursor(page.at(-1)!) } : {}),
+    }
   },
   matchResultsFilterCatalogue: async (): Promise<MatchResultsFilterCatalogue> => {
     const [years, teams, leagues] = await Promise.all([
@@ -111,7 +125,12 @@ function toMatchRead(match: MatchRow): MatchRead {
   }
 }
 
-function conditions(status: MatchStatus, year?: string, month?: string, league?: string, team?: string): Prisma.Sql {
+type MatchResultsCursor = {
+  matchDay: string
+  id: number
+}
+
+function conditions(status: MatchStatus, order: 'ASC' | 'DESC', cursor?: MatchResultsCursor, year?: string, month?: string, league?: string, team?: string): Prisma.Sql {
   const filters: Prisma.Sql[] = [Prisma.sql`status = ${status}`]
 
   if (year) filters.push(Prisma.sql`EXTRACT(YEAR FROM date) = ${year}::integer`)
@@ -121,6 +140,39 @@ function conditions(status: MatchStatus, year?: string, month?: string, league?:
     UPPER(UNACCENT(home_team.name)) = UPPER(UNACCENT(${team}))
     OR UPPER(UNACCENT(away_team.name)) = UPPER(UNACCENT(${team}))
   )`)
+  if (cursor) filters.push(cursorCondition(cursor, order))
 
   return Prisma.sql`WHERE ${Prisma.join(filters, ' AND ')}`
+}
+
+function cursorCondition(cursor: MatchResultsCursor, order: 'ASC' | 'DESC'): Prisma.Sql {
+  const operator = order === 'DESC' ? '<' : '>'
+
+  return Prisma.sql`(
+    match.date ${Prisma.raw(operator)} ${new Date(cursor.matchDay)}
+    OR (match.date = ${new Date(cursor.matchDay)} AND match.id ${Prisma.raw(operator)} ${cursor.id})
+  )`
+}
+
+function encodeCursor({ matchDay, id }: MatchRead): string {
+  return Buffer.from(JSON.stringify({ matchDay, id })).toString('base64url')
+}
+
+function decodeCursor(cursor: string): MatchResultsCursor {
+  const parsed: unknown = JSON.parse(Buffer.from(cursor, 'base64url').toString('utf8'))
+
+  if (!isMatchResultsCursor(parsed)) throw new Error('Invalid Match Results cursor')
+
+  return parsed
+}
+
+function isMatchResultsCursor(value: unknown): value is MatchResultsCursor {
+  return typeof value === 'object'
+    && value !== null
+    && 'matchDay' in value
+    && typeof value.matchDay === 'string'
+    && /^\d{4}-\d{2}-\d{2}$/.test(value.matchDay)
+    && 'id' in value
+    && typeof value.id === 'number'
+    && Number.isInteger(value.id)
 }

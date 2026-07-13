@@ -59,6 +59,39 @@ describe('Match routes', () => {
     })
   })
 
+  it('continues a Match Results search with a cursor after a twenty-Match batch', async () => {
+    const firstBatch = Array.from({ length: 21 }, (_, index) => ({
+      ...databaseMatch,
+      id: index + 1,
+      date: new Date(`2025-04-${String(30 - index).padStart(2, '0')}T00:00:00.000Z`),
+    }))
+    queryRaw.mockResolvedValueOnce(firstBatch).mockResolvedValueOnce([{ ...databaseMatch, id: 22 }])
+
+    const firstResponse = await matchRoutes.handle(new Request('http://localhost/matches?status=FINISHED&order=DESC'))
+    const firstPage = await firstResponse.json() as { matches: { id: number }[]; nextCursor?: string }
+
+    expect(firstPage.matches).toHaveLength(20)
+    expect(firstPage.matches.at(-1)).toMatchObject({ id: 20 })
+    expect(firstPage.nextCursor).toEqual(expect.any(String))
+
+    const nextResponse = await matchRoutes.handle(new Request(`http://localhost/matches?status=FINISHED&order=DESC&cursor=${firstPage.nextCursor}`))
+
+    expect(await nextResponse.json()).toMatchObject({
+      status: 'success',
+      matches: [expect.objectContaining({ id: 22 })],
+    })
+  })
+
+  it('does not limit upcoming Matches to Match Results batch size', async () => {
+    queryRaw.mockResolvedValue(Array.from({ length: 21 }, (_, index) => ({ ...databaseMatch, id: index + 1 })))
+
+    const response = await matchRoutes.handle(new Request('http://localhost/matches?status=UPCOMING&order=ASC'))
+    const page = await response.json() as { matches: unknown[]; nextCursor?: string }
+
+    expect(page.matches).toHaveLength(21)
+    expect(page.nextCursor).toBeUndefined()
+  })
+
   it('rejects a malformed month before reading Matches', async () => {
     const response = await matchRoutes.handle(new Request('http://localhost/matches?status=FINISHED&order=DESC&month=banana'))
 

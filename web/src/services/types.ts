@@ -4,6 +4,7 @@ import { Combo, Match } from '@/types';
 export type FetchMatchesResponse = {
   status: string;
   matches: Match[];
+  nextCursor?: string;
 }
 
 export type FetchFiltersResponse = {
