@@ -1,6 +1,7 @@
 import { Browser } from 'puppeteer'
 import { MatchStatus } from '../enums/match_status'
 import { parseDate } from '../lib/parse_date'
+import { newEspnPage } from '../lib/espn_page'
 import { matchService } from '../services/match_service'
 import { espnTeamIdFromLink } from '../lib/espn_team_identity'
 import { teamEmblemUrl } from '../lib/team_emblem_url'
@@ -16,7 +17,7 @@ const url = (type: 'calendario' | 'resultados', season?: number) => {
 
 export const matchHandler = {
   scrapeFinishedMatches: async (browser: Browser, season?: number) => {
-    const page = await browser.newPage()
+    const page = await newEspnPage(browser)
 
     await page.goto(url('resultados', season), { waitUntil: 'networkidle0' })
 
@@ -105,7 +106,7 @@ export const matchHandler = {
     }
   },
   discoverFinishedMatchSeasons: async (browser: Browser) => {
-    const page = await browser.newPage()
+    const page = await newEspnPage(browser)
 
     await page.goto(url('resultados'), { waitUntil: 'networkidle0' })
 
@@ -133,7 +134,7 @@ export const matchHandler = {
     return discovered
   },
   scrapeUpcomingMatches: async (browser: Browser) => {
-    const page = await browser.newPage()
+    const page = await newEspnPage(browser)
 
     await page.goto(url('calendario'), { waitUntil: 'networkidle0' })
 

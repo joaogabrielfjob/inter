@@ -1,4 +1,5 @@
 import type { Browser } from 'puppeteer'
+import { newEspnPage } from '../lib/espn_page'
 import { normalizeEspnGoals, type Goal, type GoalTeam } from './goal_summary_ingestion'
 
 const matchUrl = (espnMatchId: number) => `https://www.espn.com.br/futebol/partida/_/jogoId/${espnMatchId}`
@@ -21,7 +22,7 @@ function goalTexts(column: EspnGoalColumn) {
 }
 
 export async function retrieveEspnGoalSummary(browser: Browser, espnMatchId: number): Promise<Goal[]> {
-  const page = await browser.newPage()
+  const page = await newEspnPage(browser)
   try {
     await page.goto(matchUrl(espnMatchId), { waitUntil: 'domcontentloaded', timeout: 20_000 })
     await page.waitForSelector(gamecastSelector, { timeout: 10_000 })

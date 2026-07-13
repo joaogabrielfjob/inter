@@ -1,5 +1,6 @@
 import type { Browser } from 'puppeteer'
 import { espnMatchIdFromLink } from '../lib/espn_match_identity'
+import { newEspnPage } from '../lib/espn_page'
 import { parseDate } from '../lib/parse_date'
 import type { HistoricalRetryableCompletedMatch } from './goal_summary_backfill'
 
@@ -16,7 +17,7 @@ const resultsUrl = (season: number) =>
   `https://www.espn.com.br/futebol/time/resultados/_/id/1936/temporada/${season}`
 
 export async function resolveHistoricalEspnMatchId(browser: Browser, match: HistoricalRetryableCompletedMatch) {
-  const page = await browser.newPage()
+  const page = await newEspnPage(browser)
   try {
     const season = match.date.getUTCFullYear()
     await page.goto(resultsUrl(season), { waitUntil: 'domcontentloaded', timeout: 20_000 })
