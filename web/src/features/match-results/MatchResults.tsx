@@ -77,7 +77,7 @@ function MatchResultsContent({ confirmedSearch, setSearchParams }: MatchResultsC
         <div className='w-21'>
           <Select data={filters.years} placeholder='Ano' value={draftSearch.year ?? ''} onChange={updateDraft('year')} />
         </div>
-        <div className='w-21'>
+        <div className='w-28'>
           <Select data={filters.months} placeholder='Mês' value={draftSearch.month ?? ''} onChange={updateDraft('month')} />
         </div>
         <div className='w-51'>

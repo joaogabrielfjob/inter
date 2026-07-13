@@ -33,7 +33,8 @@ export type MatchResultsFilterCatalogue = {
 }
 
 const months: Combo[] = [
-  'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez',
+  'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
 ].map((label, index) => ({ value: String(index + 1), label }))
 
 export const matchReadService = {

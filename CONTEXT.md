@@ -40,6 +40,10 @@ _Avoid_: reset state, cancel search
 The independently selectable values drawn from completed Matches for Match Results Filters. An option remains available even when its combination with other filters has no Match Results.
 _Avoid_: dependent filters, cascading filters
 
+**Month Filter Option**:
+A calendar-month Match Results Filter Option, presented throughout Match Results with its full Brazilian Portuguese name.
+_Avoid_: month abbreviation, shortened month label
+
 **Fixture**:
 A scheduled match that has not yet been completed.
 _Avoid_: upcoming result
