@@ -4,6 +4,10 @@ import { parseDate } from '../lib/parse_date'
 import { matchService } from '../services/match_service'
 import { espnTeamIdFromLink } from '../lib/espn_team_identity'
 import { teamEmblemUrl } from '../lib/team_emblem_url'
+import { espnMatchIdFromLink } from '../lib/espn_match_identity'
+import { ingestGoalSummary } from '../services/goal_summary_ingestion'
+import { retrieveEspnGoalSummary } from '../services/goal_summary_scraper'
+import { goalSummaryStore } from '../services/goal_summary_store'
 
 const url = (type: 'calendario' | 'resultados', season?: number) => {
   const teamUrl = `https://www.espn.com.br/futebol/time/${type}/_/id/1936`
@@ -43,6 +47,7 @@ export const matchHandler = {
         const awayEmblem = emblems?.[1]?.src
         const homeLink = columns[1]?.querySelector('a')?.href
         const awayLink = columns[3]?.querySelector('a')?.href
+        const matchLink = Array.from(row.querySelectorAll('a')).find((link) => /\/jogoId\/\d+/.test(link.href))?.href
 
         if (homeScore === undefined || awayScore === undefined || Number.isNaN(homeScore) || Number.isNaN(awayScore)) {
           skippedRows.push(row.textContent?.trim() ?? '')
@@ -59,7 +64,8 @@ export const matchHandler = {
           awayLink,
           awayScore,
           awayEmblem,
-          league
+          league,
+          matchLink,
         })
       }
       
@@ -75,17 +81,21 @@ export const matchHandler = {
         continue
       }
 
-      const promise = matchService.upsertMatch({
+      const espnMatchId = espnMatchIdFromLink(match.matchLink)
+      const result = await matchService.upsertMatch({
         date: parsedDate,
         homeTeam: { name: match.home, espnTeamId: espnTeamIdFromLink(match.homeLink), emblemUrl: teamEmblemUrl(match.homeEmblem) },
         homeScore: match.homeScore,
         awayTeam: { name: match.away, espnTeamId: espnTeamIdFromLink(match.awayLink), emblemUrl: teamEmblemUrl(match.awayEmblem) },
         awayScore: match.awayScore,
         championship: match.league,
-        status: MatchStatus.FINISHED
+        status: MatchStatus.FINISHED,
+        espnMatchId,
       })
 
-      promises.push(promise)
+      if (espnMatchId) {
+        promises.push(ingestGoalSummary(result, goalSummaryStore, () => retrieveEspnGoalSummary(browser, espnMatchId)))
+      }
     }
 
     await Promise.all(promises)

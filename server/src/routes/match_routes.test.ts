@@ -24,6 +24,11 @@ const databaseMatch = {
   league: 'Brasileirão',
   status: 'FINISHED',
   time: null,
+  goal_summary_status: 'VERIFIED',
+  goals: [
+    { scorer: 'Alan Patrick', minute: '12', team: 'HOME', marker: null },
+    { scorer: 'Cristaldo', minute: '45+2', team: 'AWAY', marker: 'P' },
+  ],
 }
 
 beforeEach(() => {
@@ -37,7 +42,7 @@ afterEach(() => {
 })
 
 describe('Match routes', () => {
-  it('returns browser-facing Matches without persistence names or status', async () => {
+  it('returns browser-facing Match Results with goal summaries but no ESPN identity', async () => {
     queryRaw.mockResolvedValue([databaseMatch])
 
     const response = await matchRoutes.handle(new Request('http://localhost/matches?status=FINISHED&order=DESC'))
@@ -55,7 +60,31 @@ describe('Match routes', () => {
         awayEmblem: '/team-emblems/away-hash.png',
         matchDay: '2025-04-12',
         league: 'Brasileirão',
+        goalSummary: {
+          status: 'VERIFIED',
+          goals: [
+            { scorer: 'Alan Patrick', minute: '12', team: 'HOME' },
+            { scorer: 'Cristaldo', minute: '45+2', team: 'AWAY', marker: 'P' },
+          ],
+        },
       }],
+    })
+  })
+
+  it('returns verified scoreless and unavailable Goal Summaries distinctly', async () => {
+    queryRaw.mockResolvedValue([
+      { ...databaseMatch, id: 1, homeScore: 0, awayScore: 0, goals: [] },
+      { ...databaseMatch, id: 2, goal_summary_status: 'UNAVAILABLE', goals: [] },
+    ])
+
+    const response = await matchRoutes.handle(new Request('http://localhost/matches?status=FINISHED&order=DESC'))
+
+    expect(await response.json()).toMatchObject({
+      status: 'success',
+      matches: [
+        { id: 1, goalSummary: { status: 'VERIFIED', goals: [] } },
+        { id: 2, goalSummary: { status: 'UNAVAILABLE', goals: [] } },
+      ],
     })
   })
 

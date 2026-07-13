@@ -14,6 +14,19 @@ export type MatchRead = {
   matchDay: string
   league: string
   kickoffTime?: string
+  goalSummary: GoalSummaryRead
+}
+
+export type GoalSummaryRead = {
+  status: 'VERIFIED' | 'UNAVAILABLE'
+  goals: GoalRead[]
+}
+
+export type GoalRead = {
+  scorer: string
+  minute: string
+  team: 'HOME' | 'AWAY'
+  marker?: 'P' | 'C'
 }
 
 export type MatchReadQuery = {
@@ -51,14 +64,21 @@ export const matchReadService = {
     const where = conditions(status, resultOrder, cursor, year, month, league, team)
     const query = Prisma.sql`
       SELECT match.id, match.home_score AS "homeScore", match.away_score AS "awayScore", match.date, match.league, match.time,
+        match.goal_summary_status,
         home_team.name AS home_team_name, away_team.name AS away_team_name,
-        home_emblem.path AS home_emblem_path, away_emblem.path AS away_emblem_path
+        home_emblem.path AS home_emblem_path, away_emblem.path AS away_emblem_path,
+        COALESCE(json_agg(json_build_object(
+          'scorer', goal.scorer, 'minute', goal.minute, 'team', goal.team_side, 'marker', goal.marker
+        ) ORDER BY goal.id) FILTER (WHERE goal.id IS NOT NULL), '[]') AS goals
       FROM match
       LEFT JOIN team AS home_team ON home_team.id = match.home_team_id
       LEFT JOIN team AS away_team ON away_team.id = match.away_team_id
       LEFT JOIN team_emblem AS home_emblem ON home_emblem.team_id = home_team.id AND home_emblem.is_current = true
       LEFT JOIN team_emblem AS away_emblem ON away_emblem.team_id = away_team.id AND away_emblem.is_current = true
-      ${where} ORDER BY match.date ${Prisma.raw(resultOrder)}${isMatchResults ? Prisma.sql`, match.id ${Prisma.raw(resultOrder)}` : Prisma.empty}
+      LEFT JOIN goal ON goal.match_id = match.id
+      ${where}
+      GROUP BY match.id, home_team.name, away_team.name, home_emblem.path, away_emblem.path
+      ORDER BY match.date ${Prisma.raw(resultOrder)}${isMatchResults ? Prisma.sql`, match.id ${Prisma.raw(resultOrder)}` : Prisma.empty}
       ${isMatchResults ? Prisma.sql`LIMIT 21` : Prisma.empty}`
     const matches = await prisma.$queryRaw<MatchRow[]>(query)
     const page = (isMatchResults ? matches.slice(0, 20) : matches).map(toMatchRead)
@@ -108,6 +128,11 @@ type MatchRow = {
   date: Date; league: string; time: string | null
   home_team_name: string | null; away_team_name: string | null
   home_emblem_path: string | null; away_emblem_path: string | null
+  goal_summary_status: string; goals: GoalRow[]
+}
+
+type GoalRow = {
+  scorer: string; minute: string; team: string; marker: string | null
 }
 
 function toMatchRead(match: MatchRow): MatchRead {
@@ -121,7 +146,20 @@ function toMatchRead(match: MatchRow): MatchRead {
     awayEmblem: match.away_emblem_path ?? undefined,
     matchDay: match.date.toISOString().slice(0, 10),
     league: match.league,
+    goalSummary: {
+      status: match.goal_summary_status === 'VERIFIED' ? 'VERIFIED' : 'UNAVAILABLE',
+      goals: match.goals.map(toGoalRead),
+    },
     ...(match.time ? { kickoffTime: match.time } : {}),
+  }
+}
+
+function toGoalRead(goal: GoalRow): GoalRead {
+  return {
+    scorer: goal.scorer,
+    minute: goal.minute,
+    team: goal.team === 'AWAY' ? 'AWAY' : 'HOME',
+    ...(goal.marker === 'P' || goal.marker === 'C' ? { marker: goal.marker } : {}),
   }
 }
 

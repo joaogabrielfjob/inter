@@ -5,14 +5,14 @@ type UnresolvedLegacyRecord = { matchId: number; side: 'home' | 'away'; reason: 
 const unresolved: UnresolvedLegacyRecord[] = []
 
 type LegacyMatch = { id: number; home: string; away: string; home_emblem: string; away_emblem: string }
-const [{ hasLegacyColumns }] = await prisma.$queryRaw<{ hasLegacyColumns: boolean }[]>`
+const [legacyColumns] = await prisma.$queryRaw<{ hasLegacyColumns: boolean }[]>`
   SELECT EXISTS (
     SELECT 1 FROM information_schema.columns
     WHERE table_schema = 'public' AND table_name = 'match' AND column_name = 'home'
   ) AS "hasLegacyColumns"
 `
 
-if (!hasLegacyColumns) {
+if (!legacyColumns?.hasLegacyColumns) {
   console.info('Legacy Match ownership fields have already been removed; no Team backfill is needed.')
   process.exit(0)
 }

@@ -8,20 +8,36 @@ datasource db {
 }
 
 model Match {
-  id         Int      @id @default(autoincrement())
-  homeScore  Int      @map("home_score")
-  awayScore  Int      @map("away_score")
-  date       DateTime
-  league     String
-  status     String
-  time       String?
-  homeTeamId Int      @map("home_team_id")
-  awayTeamId Int      @map("away_team_id")
-  homeTeam   Team     @relation("HomeTeam", fields: [homeTeamId], references: [id])
-  awayTeam   Team     @relation("AwayTeam", fields: [awayTeamId], references: [id])
+  id                Int      @id @default(autoincrement())
+  homeScore         Int      @map("home_score")
+  awayScore         Int      @map("away_score")
+  date              DateTime
+  league            String
+  status            String
+  time              String?
+  espnMatchId       Int?     @unique @map("espn_match_id")
+  goalSummaryStatus String   @default("UNAVAILABLE") @map("goal_summary_status")
+  homeTeamId        Int      @map("home_team_id")
+  awayTeamId        Int      @map("away_team_id")
+  homeTeam          Team     @relation("HomeTeam", fields: [homeTeamId], references: [id])
+  awayTeam          Team     @relation("AwayTeam", fields: [awayTeamId], references: [id])
+  goals             Goal[]
 
   @@unique([homeTeamId, awayTeamId, date])
   @@map("match")
+}
+
+model Goal {
+  id       Int     @id @default(autoincrement())
+  matchId  Int     @map("match_id")
+  scorer   String
+  minute   String
+  teamSide String  @map("team_side")
+  marker   String?
+  match    Match   @relation(fields: [matchId], references: [id], onDelete: Cascade)
+
+  @@index([matchId])
+  @@map("goal")
 }
 
 model Team {
@@ -38,15 +54,15 @@ model Team {
 }
 
 model TeamEmblem {
-  id          Int      @id @default(autoincrement())
-  teamId      Int      @map("team_id")
-  path        String   @unique
-  contentHash String   @map("content_hash")
-  mimeType    String   @map("mime_type")
-  isCurrent   Boolean  @default(true) @map("is_current")
+  id          Int       @id @default(autoincrement())
+  teamId      Int       @map("team_id")
+  path        String    @unique
+  contentHash String    @map("content_hash")
+  mimeType    String    @map("mime_type")
+  isCurrent   Boolean   @default(true) @map("is_current")
   replacedAt  DateTime? @map("replaced_at")
-  createdAt   DateTime @default(now()) @map("created_at")
-  team        Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now()) @map("created_at")
+  team        Team      @relation(fields: [teamId], references: [id], onDelete: Cascade)
 
   @@index([teamId, isCurrent])
   @@index([isCurrent, replacedAt])

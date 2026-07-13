@@ -11,6 +11,7 @@ interface CreateRequest {
   championship: string
   status: MatchStatus
   time?: string
+  espnMatchId?: number
 }
 
 export const matchService = {
@@ -32,7 +33,8 @@ export const matchService = {
         homeTeamId: homeTeam.id,
         awayTeamId: awayTeam.id,
         status: request.status,
-        time: request.time
+        time: request.time,
+        espnMatchId: request.espnMatchId,
       },
       create: {
         homeScore: request.homeScore,
@@ -42,10 +44,11 @@ export const matchService = {
         awayTeamId: awayTeam.id,
         league: request.championship,
         status: request.status,
-        time: request.time
+        time: request.time,
+        espnMatchId: request.espnMatchId,
       }
     })
 
     return match
-  }
+  },
 }

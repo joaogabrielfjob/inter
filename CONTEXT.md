@@ -20,6 +20,38 @@ _Avoid_: timestamp, datetime
 The collection of completed matches and the criteria used to browse them.
 _Avoid_: results page, finished-games feature
 
+**Goal**:
+A score-changing event in a completed Match, attributed to its scorer, Team, and Match minute when known.
+_Avoid_: call
+
+**Own Goal**:
+A Goal scored by a player against that player's own Team. It appears in the Goal Summary under the Team whose score increased and identifies the scorer with `C`.
+_Avoid_: normal Goal
+
+**Penalty Goal**:
+A Goal scored from a penalty kick and identified with `P` in its Goal Summary entry.
+_Avoid_: normal Goal
+
+**Goal Summary**:
+The chronological list of known Goals for a completed Match, shown to explain its final score; it is empty for a scoreless Match.
+_Avoid_: match details, score details
+
+**Unavailable Goal Summary**:
+The state of a completed Match whose final score is known but whose Goal Summary could not be retrieved from ESPN.
+_Avoid_: scoreless Match, empty Goal Summary
+
+**Verified Goal Summary**:
+A Goal Summary whose per-Team Goal counts match the completed Match's final score.
+_Avoid_: partial Goal Summary, unverified Goal Summary
+
+**Goal Summary Backfill**:
+The one-time retrieval of Goal Summaries for completed Matches already stored by the application.
+_Avoid_: historical import
+
+**Goal Summary Ingestion**:
+The separate retrieval and storage of a Goal Summary after its completed Match has been ingested from ESPN. A later Verified Goal Summary replaces an earlier one, while a failed retrieval does not replace one.
+_Avoid_: goal scraping
+
 **Match Results Filters**:
 The criteria a supporter confirms to narrow Match Results. Filter choices are not applied until confirmed as a search.
 _Avoid_: live search, instant filtering
@@ -59,6 +91,10 @@ _Avoid_: team image, logo, badge, crest
 **ESPN Team ID**:
 The numeric identifier in ESPN's explicit Team link, used to recognize a Team during ESPN ingestion.
 _Avoid_: emblem URL ID, team name key
+
+**ESPN Match ID**:
+The numeric identifier in ESPN's explicit Match link, used to retrieve and retry that Match's Goal Summary.
+_Avoid_: Match title, Match URL
 
 **Current Season Ingestion**:
 The routine refresh that retrieves Internacional's current completed Matches and Fixtures from ESPN.

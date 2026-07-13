@@ -14,4 +14,17 @@ export type Match = {
   matchDay: string;
   league: string;
   kickoffTime?: string;
+  goalSummary: GoalSummary;
+}
+
+export type GoalSummary = {
+  status: 'VERIFIED' | 'UNAVAILABLE';
+  goals: Goal[];
+}
+
+export type Goal = {
+  scorer: string;
+  minute: string;
+  team: 'HOME' | 'AWAY';
+  marker?: 'P' | 'C';
 }

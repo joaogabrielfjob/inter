@@ -19,6 +19,11 @@ body {
   background: #fb2c36 !important;
 }
 
+@keyframes goal-card-flip {
+  from { transform: rotateY(90deg); }
+  to { transform: rotateY(0); }
+}
+
 :root {
   --radius: 0.625rem;
   --background: oklch(1 0 0);
