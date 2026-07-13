@@ -12,6 +12,10 @@ export type ComboBoxProps = {
   onChange: (value: string) => void;
 }
 
+function normalizedSearchValue(value: string) {
+  return value.normalize('NFD').replace(/\p{Diacritic}/gu, '');
+}
+
 export function ComboBox({ data, placeholder, value, onChange }: ComboBoxProps) {
   const [open, setOpen] = useState(false);
 
@@ -41,6 +45,7 @@ export function ComboBox({ data, placeholder, value, onChange }: ComboBoxProps) 
                 <CommandItem
                   key={d.value}
                   value={d.value}
+                  keywords={[normalizedSearchValue(d.label)]}
                   onSelect={(currentValue) => {
                     onChange(currentValue)
                     setOpen(false)
