@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { SearchIcon } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useReducer, useRef } from 'react';
 import { useSearchParams, type SetURLSearchParams } from 'react-router-dom';
 import { ComboBox } from './ComboBox';
 import { ResultCard } from './ResultCard';
@@ -10,6 +10,25 @@ import { fetchMatchResults, fetchMatchResultsFilters } from './matchResultsApi';
 import { isMatchResultsSearch, parseMatchResultsSearch, toMatchResultsSearchParams, type MatchResultsSearch } from './matchResultsSearch';
 
 const unfilteredSearch: MatchResultsSearch = {};
+
+type DraftSearchAction =
+  | { type: 'filter-changed'; key: keyof MatchResultsSearch; value: string }
+  | { type: 'filters-cleared' }
+  | { type: 'confirmed-search-changed'; search: MatchResultsSearch };
+
+function draftSearchReducer(
+  draftSearch: MatchResultsSearch,
+  action: DraftSearchAction,
+): MatchResultsSearch {
+  switch (action.type) {
+    case 'filter-changed':
+      return { ...draftSearch, [action.key]: action.value || undefined };
+    case 'filters-cleared':
+      return unfilteredSearch;
+    case 'confirmed-search-changed':
+      return action.search;
+  }
+}
 
 export function MatchResults() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -33,15 +52,13 @@ type MatchResultsContentProps = {
 };
 
 function MatchResultsContent({ confirmedSearch, setSearchParams }: MatchResultsContentProps) {
-  const [previousConfirmedSearch, setPreviousConfirmedSearch] = useState(confirmedSearch);
-  const [draftSearch, setDraftSearch] = useState<MatchResultsSearch>(confirmedSearch);
+  const [draftSearch, dispatchDraftSearch] = useReducer(draftSearchReducer, confirmedSearch);
   const previousSearchRef = useRef(confirmedSearch);
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
-  if (confirmedSearch !== previousConfirmedSearch) {
-    setPreviousConfirmedSearch(confirmedSearch);
-    setDraftSearch(confirmedSearch);
-  }
+  useEffect(() => {
+    dispatchDraftSearch({ type: 'confirmed-search-changed', search: confirmedSearch });
+  }, [confirmedSearch]);
 
   const filtersQuery = useQuery({
     queryKey: ['match-results-filters'],
@@ -84,11 +101,11 @@ function MatchResultsContent({ confirmedSearch, setSearchParams }: MatchResultsC
   const filters = filtersQuery.data;
 
   const updateDraft = (key: keyof MatchResultsSearch) => (value: string) => {
-    setDraftSearch((current) => ({ ...current, [key]: value || undefined }));
+    dispatchDraftSearch({ type: 'filter-changed', key, value });
   };
   const search = () => setSearchParams(toMatchResultsSearchParams(draftSearch));
   const clear = () => {
-    setDraftSearch(unfilteredSearch);
+    dispatchDraftSearch({ type: 'filters-cleared' });
     setSearchParams({});
   };
 
