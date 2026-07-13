@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
-import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
-import { SearchIcon } from 'lucide-react';
+import { keepPreviousData, useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import { LoaderCircle, SearchIcon } from 'lucide-react';
 import { useEffect, useMemo, useReducer, useRef } from 'react';
 import { useSearchParams, type SetURLSearchParams } from 'react-router-dom';
 import { ComboBox } from './ComboBox';
@@ -69,8 +69,10 @@ function MatchResultsContent({ confirmedSearch, setSearchParams }: MatchResultsC
     queryFn: ({ pageParam }) => fetchMatchResults(confirmedSearch, pageParam),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => lastPage.nextCursor,
+    placeholderData: keepPreviousData,
   });
   const { fetchNextPage, hasNextPage, isFetchingNextPage, isFetchNextPageError } = resultsQuery;
+  const isSearchLoading = resultsQuery.isFetching && !isFetchingNextPage;
 
   useEffect(() => {
     if (previousSearchRef.current !== confirmedSearch) window.scrollTo({ top: 0 });
@@ -89,16 +91,13 @@ function MatchResultsContent({ confirmedSearch, setSearchParams }: MatchResultsC
     return () => observer.disconnect();
   }, [fetchNextPage, hasNextPage, isFetchingNextPage, isFetchNextPageError]);
 
-  if (filtersQuery.isError || (resultsQuery.isError && !resultsQuery.data)) {
+  if (filtersQuery.isError) {
     return <RequestError onRetry={() => void Promise.all([filtersQuery.refetch(), resultsQuery.refetch()])} />;
   }
 
-  if (filtersQuery.isPending || resultsQuery.isPending) {
-    return <Loading />;
-  }
-
   const matches = resultsQuery.data?.pages.flatMap((page) => page.matches) ?? [];
-  const filters = filtersQuery.data;
+  const filters = filtersQuery.data ?? { years: [], months: [], teams: [], leagues: [] };
+  const isSearchError = resultsQuery.isError && !isFetchNextPageError;
 
   const updateDraft = (key: keyof MatchResultsSearch) => (value: string) => {
     dispatchDraftSearch({ type: 'filter-changed', key, value });
@@ -124,33 +123,33 @@ function MatchResultsContent({ confirmedSearch, setSearchParams }: MatchResultsC
         <div className='w-57'>
           <Select data={filters.leagues} placeholder='Campeonato' value={draftSearch.league ?? ''} onChange={updateDraft('league')} />
         </div>
-        <Button variant='outline' size='lg' className='cursor-pointer' onClick={clear}>Limpar filtros</Button>
-        <Button aria-label='Buscar resultados' size='icon' className='h-10 w-10 cursor-pointer bg-red-500 text-white hover:bg-red-600' onClick={search}>
-          <SearchIcon />
+        <Button variant='outline' size='lg' className='cursor-pointer' onClick={clear} disabled={isSearchLoading}>Limpar filtros</Button>
+        <Button aria-label='Buscar resultados' aria-busy={isSearchLoading} size='icon' className='h-10 w-10 cursor-pointer bg-red-500 text-white hover:bg-red-600' onClick={search} disabled={isSearchLoading}>
+          {isSearchLoading ? <LoaderCircle className='animate-spin' /> : <SearchIcon />}
         </Button>
       </div>
 
-      <div className={matches.length ? 'container mx-auto grid grid-cols-(--auto-fill) gap-5 py-12' : 'flex min-h-[60vh] w-full flex-1 items-center justify-center py-24'}>
-        {matches.length ? matches.map((match) => <ResultCard key={match.id} {...match} />) : (
-          <div className='flex flex-col items-center justify-center gap-4'>
-            <span className='text-xl'>Nenhum jogo encontrado.</span>
+      {isSearchError ? <RequestError onRetry={() => void resultsQuery.refetch()} /> : (
+        <>
+          <div className={matches.length ? 'container mx-auto grid grid-cols-(--auto-fill) gap-5 py-12' : 'flex min-h-[60vh] w-full flex-1 items-center justify-center py-24'}>
+            {matches.length ? matches.map((match) => <ResultCard key={match.id} {...match} />) : (
+              !resultsQuery.isPending && <div className='flex flex-col items-center justify-center gap-4'>
+                  <span className='text-xl'>Nenhum jogo encontrado.</span>
+                </div>
+            )}
           </div>
-        )}
-      </div>
-      {matches.length > 0 && !resultsQuery.hasNextPage && <p className='pb-12 text-center text-sm text-muted-foreground'>Todos os resultados foram carregados.</p>}
-      {resultsQuery.isFetchNextPageError && (
-        <div className='flex flex-col items-center gap-3 pb-12'>
-          <p className='text-sm text-muted-foreground'>Não foi possível carregar mais resultados.</p>
-          <Button variant='outline' onClick={() => void resultsQuery.fetchNextPage()}>Tentar novamente</Button>
-        </div>
+          {matches.length > 0 && !resultsQuery.hasNextPage && <p className='pb-12 text-center text-sm text-muted-foreground'>Todos os resultados foram carregados.</p>}
+          {resultsQuery.isFetchNextPageError && (
+            <div className='flex flex-col items-center gap-3 pb-12'>
+              <p className='text-sm text-muted-foreground'>Não foi possível carregar mais resultados.</p>
+              <Button variant='outline' onClick={() => void resultsQuery.fetchNextPage()}>Tentar novamente</Button>
+            </div>
+          )}
+          {resultsQuery.hasNextPage && <div ref={loadMoreRef} aria-hidden='true' />}
+        </>
       )}
-      {resultsQuery.hasNextPage && <div ref={loadMoreRef} aria-hidden='true' />}
     </div>
   );
-}
-
-function Loading() {
-  return <div className='flex min-h-[60vh] items-center justify-center'><p className='text-xl'>Buscando resultados…</p></div>;
 }
 
 function InvalidSearch({ onClear }: { onClear: () => void }) {

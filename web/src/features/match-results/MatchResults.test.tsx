@@ -163,6 +163,81 @@ describe('MatchResults', () => {
     expect(screen.getByRole('button', { name: 'Limpar filtros' })).toBeInTheDocument();
   });
 
+  it('keeps loaded Match Results visible while a new search is loading', async () => {
+    let finishUnfilteredSearch: (() => void) | undefined;
+    server.use(
+      http.get('*/matches', async ({ request }) => {
+        const url = new URL(request.url);
+        if (url.searchParams.get('year') === '2025') {
+          return HttpResponse.json({ status: 'success', matches: [{
+            id: 1, home: 'Internacional', homeScore: 2, away: 'Grêmio', awayScore: 1, matchDay: '2025-04-12', league: 'Brasileirão',
+          }] });
+        }
+
+        await new Promise<void>((resolve) => {
+          finishUnfilteredSearch = resolve;
+        });
+        return HttpResponse.json({ status: 'success', matches: [] });
+      }),
+    );
+    renderMatchResults('/resultados?ano=2025');
+
+    await screen.findByText('Grêmio');
+    await userEvent.click(screen.getByRole('button', { name: 'Limpar filtros' }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Buscar resultados' })).toBeDisabled();
+      expect(screen.getByRole('button', { name: 'Buscar resultados' })).toHaveAttribute('aria-busy', 'true');
+    });
+    expect(screen.getByText('Grêmio')).toBeInTheDocument();
+    expect(screen.queryByText('Buscando resultados…')).not.toBeInTheDocument();
+
+    finishUnfilteredSearch?.();
+
+    expect(await screen.findByText('Nenhum jogo encontrado.')).toBeInTheDocument();
+  });
+
+  it('keeps the toolbar visible and spins the search button while retrying a failed search', async () => {
+    let unfilteredSearches = 0;
+    let finishRetry: (() => void) | undefined;
+    server.use(
+      http.get('*/matches', async ({ request }) => {
+        const url = new URL(request.url);
+        if (url.searchParams.get('year') === '2025') {
+          return HttpResponse.json({ status: 'success', matches: [{
+            id: 1, home: 'Internacional', homeScore: 2, away: 'Grêmio', awayScore: 1, matchDay: '2025-04-12', league: 'Brasileirão',
+          }] });
+        }
+
+        unfilteredSearches += 1;
+        if (unfilteredSearches === 1) return new HttpResponse(null, { status: 500 });
+        await new Promise<void>((resolve) => {
+          finishRetry = resolve;
+        });
+        return HttpResponse.json({ status: 'success', matches: [] });
+      }),
+    );
+    renderMatchResults('/resultados?ano=2025');
+
+    await screen.findByText('Grêmio');
+    await userEvent.click(screen.getByRole('button', { name: 'Limpar filtros' }));
+
+    expect(await screen.findByText('Não foi possível carregar os resultados.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Buscar resultados' })).toBeInTheDocument();
+    expect(screen.queryByText('Grêmio')).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Tentar novamente' }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Buscar resultados' })).toBeDisabled();
+      expect(screen.getByRole('button', { name: 'Buscar resultados' })).toHaveAttribute('aria-busy', 'true');
+    });
+
+    finishRetry?.();
+
+    expect(await screen.findByText('Nenhum jogo encontrado.')).toBeInTheDocument();
+  });
+
   it('replaces the screen with an error when Match Results Filter Options cannot load', async () => {
     server.use(
       http.get('*/matches/filters', () => new HttpResponse(null, { status: 500 })),
@@ -185,6 +260,7 @@ describe('MatchResults', () => {
     );
     renderMatchResults('/resultados?ano=2025');
     await screen.findByText('Não foi possível carregar os resultados.');
+    expect(screen.getByRole('button', { name: 'Buscar resultados' })).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: 'Tentar novamente' }));
 
