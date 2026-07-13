@@ -77,5 +77,13 @@ function SmallTeam({ name, emblem }: { name: string; emblem?: string }) {
 }
 
 function GoalList({ goals, away = false }: { goals: ResultCardProps['goalSummary']['goals']; away?: boolean }) {
-  return <ul className='mt-4 space-y-1 text-sm'>{goals.map((goal, index) => <li key={`${goal.scorer}-${goal.minute}-${index}`} className='whitespace-nowrap'>{away ? `${goal.minute} — ${goal.scorer}${goal.marker ? ` (${goal.marker})` : ''}` : `${goal.scorer}${goal.marker ? ` (${goal.marker})` : ''} — ${goal.minute}`}</li>)}</ul>;
+  return <ul className='mt-4 space-y-1 text-sm'>{goals.map((goal, index) => <li key={`${goal.scorer}-${goal.minute}-${index}`} className='whitespace-nowrap'>{away ? `${formatAwayMinute(goal.minute)} — ${goal.scorer}${goal.marker ? ` (${goal.marker})` : ''}` : `${goal.scorer}${goal.marker ? ` (${goal.marker})` : ''} — ${formatMinute(goal.minute)}`}</li>)}</ul>;
+}
+
+function formatMinute(minute: string) {
+  return `${minute.replace(/['′’]+$/, '')}'`;
+}
+
+function formatAwayMinute(minute: string) {
+  return `'${minute.replace(/['′’]+$/, '')}`;
 }
