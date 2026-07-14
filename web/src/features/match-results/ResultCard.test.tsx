@@ -34,7 +34,7 @@ describe('ResultCard', () => {
     await user.click(screen.getByRole('button', { name: 'Ver gols' }));
 
     expect(screen.getByText("Alan Patrick — 12'")).toBeVisible();
-    expect(screen.getByText("'45+2 — Cristaldo (P)")).toBeVisible();
+    expect(screen.getByText("'45+2 — (P) Cristaldo")).toBeVisible();
     expect(screen.getByText("João (C) — 70'")).toBeVisible();
     await user.click(screen.getByRole('button', { name: 'Voltar ao resultado' }));
     expect(screen.getByText('brasileirão')).toBeVisible();
