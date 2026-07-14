@@ -24,6 +24,7 @@ const databaseMatch = {
   league: 'Brasileirão',
   status: 'FINISHED',
   time: null,
+  espnMatchId: 401234567,
   goal_summary_status: 'VERIFIED',
   goals: [
     { scorer: 'Alan Patrick', minute: '12', team: 'HOME', marker: null },

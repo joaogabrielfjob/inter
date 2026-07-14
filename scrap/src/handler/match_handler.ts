@@ -10,9 +10,50 @@ import { ingestGoalSummary } from '../services/goal_summary_ingestion'
 import { retrieveEspnGoalSummary } from '../services/goal_summary_scraper'
 import { goalSummaryStore } from '../services/goal_summary_store'
 
+interface UpcomingMatch {
+  date: string
+  home: string
+  homeLink?: string
+  homeEmblem?: string
+  away: string
+  awayLink?: string
+  awayEmblem?: string
+  time: string
+  league: string
+  matchLink?: string
+}
+
 const url = (type: 'calendario' | 'resultados', season?: number) => {
   const teamUrl = `https://www.espn.com.br/futebol/time/${type}/_/id/1936`
   return season ? `${teamUrl}/temporada/${season}` : `${teamUrl}/bra.internacional`
+}
+
+export async function ingestUpcomingMatches(matches: UpcomingMatch[]) {
+  const promises = []
+
+  for (const match of matches) {
+    const parsedDate = parseDate(match.date)
+    if (!parsedDate) continue
+
+    const espnMatchId = espnMatchIdFromLink(match.matchLink)
+    if (espnMatchId === undefined) {
+      console.warn(`ESPN Match ID unavailable; used date fallback for upcoming Fixture: ${match.home} vs ${match.away} on ${match.date}`)
+    }
+
+    promises.push(matchService.upsertMatch({
+      date: parsedDate,
+      homeTeam: { name: match.home, espnTeamId: espnTeamIdFromLink(match.homeLink), emblemUrl: teamEmblemUrl(match.homeEmblem) },
+      homeScore: 0,
+      awayTeam: { name: match.away, espnTeamId: espnTeamIdFromLink(match.awayLink), emblemUrl: teamEmblemUrl(match.awayEmblem) },
+      awayScore: 0,
+      championship: match.league,
+      status: MatchStatus.UPCOMING,
+      time: match.time,
+      espnMatchId,
+    }))
+  }
+
+  await Promise.all(promises)
 }
 
 export const matchHandler = {
@@ -160,6 +201,7 @@ export const matchHandler = {
         const awayEmblem = emblems?.[1]?.src
         const homeLink = columns[1]?.querySelector('a')?.href
         const awayLink = columns[3]?.querySelector('a')?.href
+        const matchLink = Array.from(row.querySelectorAll('a')).find((link) => /\/jogoId\/\d+/.test(link.href))?.href
 
         response.push({
           date,
@@ -170,33 +212,14 @@ export const matchHandler = {
           awayLink,
           awayEmblem,
           time,
-          league
+          league,
+          matchLink,
         })
       }
       
       return response
     })
 
-    const promises = []
-    for (const match of matches) {
-      const parsedDate = parseDate(match.date)
-
-      if (!parsedDate) continue
-
-      const promise = matchService.upsertMatch({
-        date: parsedDate,
-        homeTeam: { name: match.home, espnTeamId: espnTeamIdFromLink(match.homeLink), emblemUrl: teamEmblemUrl(match.homeEmblem) },
-        homeScore: 0,
-        awayTeam: { name: match.away, espnTeamId: espnTeamIdFromLink(match.awayLink), emblemUrl: teamEmblemUrl(match.awayEmblem) },
-        awayScore: 0,
-        championship: match.league,
-        status: MatchStatus.UPCOMING,
-        time: match.time
-      })
-
-      promises.push(promise)
-    }
-
-    await Promise.all(promises)
+    await ingestUpcomingMatches(matches)
   }
 }
