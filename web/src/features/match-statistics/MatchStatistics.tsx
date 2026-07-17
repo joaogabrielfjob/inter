@@ -59,7 +59,7 @@ function MatchStatisticsContent({ confirmedSearch, setSearchParams }: MatchStati
         <div className='w-51'><ComboBox data={filters.teams} placeholder='Times' value={draftSearch.team ?? ''} onChange={updateDraft('team')} /></div>
         <div className='w-57'><Select data={filters.leagues} placeholder='Campeonato' value={draftSearch.league ?? ''} onChange={updateDraft('league')} /></div>
         <Button variant='outline' size='lg' onClick={clear} disabled={isLoading}>Limpar filtros</Button>
-        <Button aria-label='Buscar estatísticas' aria-busy={isLoading} size='icon' onClick={search} disabled={isLoading}>
+        <Button aria-label='Buscar estatísticas' aria-busy={isLoading} size='icon' className='h-10 w-10 cursor-pointer bg-red-500 text-white hover:bg-red-600' onClick={search} disabled={isLoading}>
           {isLoading ? <LoaderCircle className='animate-spin' /> : <SearchIcon />}
         </Button>
       </div>
