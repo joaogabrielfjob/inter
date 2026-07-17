@@ -20,6 +20,50 @@ _Avoid_: timestamp, datetime
 The collection of completed matches and the criteria used to browse them.
 _Avoid_: results page, finished-games feature
 
+**Match Statistics**:
+Measures of Internacional's performance calculated from a selected collection of completed Matches.
+_Avoid_: statistic page, analytics
+
+**Match Statistics Filters**:
+The criteria a supporter confirms to narrow Match Statistics. They are owned independently from Match Results Filters, even when they offer the same choices.
+_Avoid_: shared filters, Results filters
+
+**Match Statistics Search**:
+The confirmed set of Match Statistics Filters used to calculate Match Statistics.
+_Avoid_: Match Results Search, filter draft
+
+**Unfiltered Match Statistics Search**:
+A Match Statistics Search with no optional Match Statistics Filters, calculated from every completed Match.
+_Avoid_: reset state, current-season statistics
+
+**Clear Match Statistics Filters**:
+The always-available supporter action that discards drafted and confirmed Match Statistics Filters and restores an Unfiltered Match Statistics Search.
+_Avoid_: current-season reset, clear to empty search
+
+**Match Statistics Filter Options**:
+The full historical, independently selectable Year, Month, Team, and Competition values drawn from completed Matches for Match Statistics Filters. An option remains available even when its combination with other filters has no completed Matches.
+_Avoid_: shared filter options, dependent filters
+
+**Performance Summary**:
+The compact match-level overview within Match Statistics, calculated from Internacional's perspective whether it is the home or away Team, including outcomes and scoring measures but not player totals.
+_Avoid_: dashboard, player statistics
+
+**Complete Performance Summary**:
+A Performance Summary calculated from every completed Match in its Match Statistics Search, without pagination.
+_Avoid_: paginated statistics, loaded-results summary
+
+**Zero-Match Performance Summary**:
+A Performance Summary for a valid Match Statistics Search with no completed Matches, displaying zero-valued measures in the usual card layout.
+_Avoid_: empty state, missing statistics
+
+**Clean Sheet**:
+A completed Match in which Internacional conceded no Goals.
+_Avoid_: shutout
+
+**Win Rate**:
+The percentage of Matches won by Internacional in a Performance Summary, calculated as wins divided by Matches Played and rounded to one decimal place.
+_Avoid_: aproveitamento, points percentage
+
 **Goal**:
 A score-changing event in a completed Match, attributed to its scorer, Team, and Match minute when known.
 _Avoid_: call
@@ -71,6 +115,10 @@ _Avoid_: reset state, cancel search
 **Match Results Filter Options**:
 The independently selectable values drawn from completed Matches for Match Results Filters. An option remains available even when its combination with other filters has no Match Results.
 _Avoid_: dependent filters, cascading filters
+
+**Team Filter**:
+A Match Results Filter that selects completed Matches involving the chosen Team as either participant; choosing an opponent therefore scopes Internacional's Match Statistics to that head-to-head collection.
+_Avoid_: opponent filter, home-or-away filter
 
 **Month Filter Option**:
 A calendar-month Match Results Filter Option, presented throughout Match Results with its full Brazilian Portuguese name.

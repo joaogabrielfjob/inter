@@ -12,6 +12,23 @@ export type FetchFiltersResponse = {
   filters: Filters;
 }
 
+export type PerformanceSummary = {
+  matchesPlayed: number;
+  wins: number;
+  draws: number;
+  losses: number;
+  goalsScored: number;
+  goalsConceded: number;
+  goalDifference: number;
+  winRate: number;
+  cleanSheets: number;
+}
+
+export type FetchPerformanceSummaryResponse = {
+  status: string;
+  summary: PerformanceSummary;
+}
+
 export type Filters = {
   years: Combo[];
   months: Combo[];

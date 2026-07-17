@@ -16,6 +16,7 @@ export function Select({ data, placeholder, value, onChange }: SelectProps) {
     <UISelect onValueChange={onChange} value={value} onOpenChange={setOpen} open={open}>
       <SelectTrigger
         className='w-full'
+        aria-label={placeholder}
         clearable={!!value}
         onClear={() => onChange('')}
       >

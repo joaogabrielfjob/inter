@@ -12,6 +12,8 @@ interface schema {
   team?: string
 }
 
+type MatchStatisticsSchema = Omit<schema, 'status' | 'order' | 'cursor'>
+
 export const matchHandler = {
   getMatches: async (params: schema) => {
     const page = await matchReadService.list(params)
@@ -30,5 +32,11 @@ export const matchHandler = {
         ...filters,
       }
     }
-  }
+  },
+  statistics: async (params: MatchStatisticsSchema) => {
+    const summary = await matchReadService.performanceSummary(params)
+    const winRate = summary.matchesPlayed ? Math.round((summary.wins / summary.matchesPlayed) * 1000) / 10 : 0
+
+    return { status: 'success', summary: { ...summary, winRate } }
+  },
 }

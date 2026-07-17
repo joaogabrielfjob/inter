@@ -55,6 +55,7 @@ function SelectTrigger({
       {clearable && onClear && (
         <button
           type="button"
+          aria-label={`Limpar ${props['aria-label'] ?? 'filtro'}`}
           className="h-4 w-4 absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center rounded-full text-red-500 hover:text-red-800 cursor-pointer z-50 pointer-events-auto"
           onClick={(e) => {
             e.stopPropagation();

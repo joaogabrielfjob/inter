@@ -28,6 +28,13 @@ export function Header() {
         >
           Resultados
         </NavLink>
+
+        <NavLink
+          to='/estatisticas'
+          className={({ isActive }) => (isActive ? activeLinkClass : linkClass)}
+        >
+          Estatísticas
+        </NavLink>
       </nav>
     </header>
   );

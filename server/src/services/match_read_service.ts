@@ -51,6 +51,25 @@ export type MatchResultsFilterCatalogue = {
   leagues: Combo[]
 }
 
+export type MatchStatisticsQuery = {
+  year?: string
+  month?: string
+  league?: string
+  team?: string
+}
+
+export type PerformanceSummary = {
+  matchesPlayed: number
+  wins: number
+  draws: number
+  losses: number
+  goalsScored: number
+  goalsConceded: number
+  goalDifference: number
+  winRate: number
+  cleanSheets: number
+}
+
 const months: Combo[] = [
   'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
   'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
@@ -121,6 +140,39 @@ export const matchReadService = {
       leagues: leagues.map(({ league }) => ({ value: league, label: league })),
     }
   },
+  performanceSummary: async ({ year, month, league, team }: MatchStatisticsQuery): Promise<PerformanceSummary> => {
+    const rows = await prisma.$queryRaw<MatchStatisticsRow[]>(Prisma.sql`
+      SELECT match.home_score AS "homeScore", match.away_score AS "awayScore",
+        (${internacionalIdentity('home_team')}) AS "internacionalIsHome"
+      FROM match
+      INNER JOIN team AS home_team ON home_team.id = match.home_team_id
+      INNER JOIN team AS away_team ON away_team.id = match.away_team_id
+      ${statisticsConditions(year, month, league, team)}
+    `)
+
+    return rows.reduce<PerformanceSummary>((summary, match) => {
+      const goalsScored = match.internacionalIsHome ? match.homeScore : match.awayScore
+      const goalsConceded = match.internacionalIsHome ? match.awayScore : match.homeScore
+
+      return {
+        matchesPlayed: summary.matchesPlayed + 1,
+        wins: summary.wins + Number(goalsScored > goalsConceded),
+        draws: summary.draws + Number(goalsScored === goalsConceded),
+        losses: summary.losses + Number(goalsScored < goalsConceded),
+        goalsScored: summary.goalsScored + goalsScored,
+        goalsConceded: summary.goalsConceded + goalsConceded,
+        goalDifference: summary.goalDifference + goalsScored - goalsConceded,
+        cleanSheets: summary.cleanSheets + Number(goalsConceded === 0),
+        winRate: 0,
+      }
+    }, emptyPerformanceSummary())
+  },
+}
+
+type MatchStatisticsRow = {
+  homeScore: number
+  awayScore: number
+  internacionalIsHome: boolean
 }
 
 type MatchRow = {
@@ -181,6 +233,46 @@ function conditions(status: MatchStatus, order: 'ASC' | 'DESC', cursor?: MatchRe
   if (cursor) filters.push(cursorCondition(cursor, order))
 
   return Prisma.sql`WHERE ${Prisma.join(filters, ' AND ')}`
+}
+
+function statisticsConditions(year?: string, month?: string, league?: string, team?: string): Prisma.Sql {
+  const filters: Prisma.Sql[] = [Prisma.sql`match.status = ${MatchStatus.FINISHED}`]
+
+  if (year) filters.push(Prisma.sql`EXTRACT(YEAR FROM match.date) = ${year}::integer`)
+  if (month) filters.push(Prisma.sql`EXTRACT(MONTH FROM match.date) = ${month}::integer`)
+  if (league) filters.push(Prisma.sql`UPPER(UNACCENT(match.league)) = UPPER(UNACCENT(${league}))`)
+  if (team) filters.push(Prisma.sql`(
+    UPPER(UNACCENT(home_team.name)) = UPPER(UNACCENT(${team}))
+    OR UPPER(UNACCENT(away_team.name)) = UPPER(UNACCENT(${team}))
+  )`)
+  filters.push(Prisma.sql`(${internacionalIdentity('home_team')} OR ${internacionalIdentity('away_team')})`)
+
+  return Prisma.sql`WHERE ${Prisma.join(filters, ' AND ')}`
+}
+
+function internacionalIdentity(team: 'home_team' | 'away_team'): Prisma.Sql {
+  return Prisma.sql`(
+    ${Prisma.raw(team)}.espn_team_id = 1866
+    OR UPPER(UNACCENT(${Prisma.raw(team)}.name)) IN ('INTERNACIONAL', 'SPORT CLUB INTERNACIONAL')
+    OR EXISTS (
+      SELECT 1 FROM unnest(${Prisma.raw(team)}.aliases) AS alias
+      WHERE UPPER(UNACCENT(alias)) IN ('INTERNACIONAL', 'SPORT CLUB INTERNACIONAL')
+    )
+  )`
+}
+
+function emptyPerformanceSummary(): PerformanceSummary {
+  return {
+    matchesPlayed: 0,
+    wins: 0,
+    draws: 0,
+    losses: 0,
+    goalsScored: 0,
+    goalsConceded: 0,
+    goalDifference: 0,
+    winRate: 0,
+    cleanSheets: 0,
+  }
 }
 
 function cursorCondition(cursor: MatchResultsCursor, order: 'ASC' | 'DESC'): Prisma.Sql {

@@ -9,3 +9,4 @@ class ResizeObserver {
 globalThis.ResizeObserver = ResizeObserver;
 
 HTMLElement.prototype.scrollIntoView = () => {};
+HTMLElement.prototype.hasPointerCapture = () => false;

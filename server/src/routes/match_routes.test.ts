@@ -138,6 +138,97 @@ describe('Match routes', () => {
     expect(await response.json()).toEqual({ status: 'success', matches: [] })
   })
 
+  it('returns one Complete Performance Summary across every matching completed Match', async () => {
+    queryRaw.mockResolvedValue(Array.from({ length: 21 }, (_, index) => ({
+      homeScore: index === 20 ? 0 : 2,
+      awayScore: index === 20 ? 0 : 1,
+      internacionalIsHome: index !== 20,
+    })))
+
+    const response = await matchRoutes.handle(new Request('http://localhost/matches/statistics?year=2025'))
+
+    expect(response.status).toBe(200)
+    expect(await response.json()).toEqual({
+      status: 'success',
+      summary: {
+        matchesPlayed: 21,
+        wins: 20,
+        draws: 1,
+        losses: 0,
+        goalsScored: 40,
+        goalsConceded: 20,
+        goalDifference: 20,
+        winRate: 95.2,
+        cleanSheets: 1,
+      },
+    })
+  })
+
+  it('calculates scores and outcomes from Internacional\'s away perspective', async () => {
+    queryRaw.mockResolvedValue([
+      { homeScore: 1, awayScore: 3, internacionalIsHome: false },
+      { homeScore: 2, awayScore: 0, internacionalIsHome: false },
+    ])
+
+    const response = await matchRoutes.handle(new Request('http://localhost/matches/statistics?year=2025'))
+
+    expect(await response.json()).toMatchObject({
+      summary: {
+        matchesPlayed: 2, wins: 1, draws: 0, losses: 1,
+        goalsScored: 3, goalsConceded: 3, goalDifference: 0,
+        winRate: 50, cleanSheets: 0,
+      },
+    })
+  })
+
+  it('returns a negative Goal Difference when Internacional concedes more than it scores', async () => {
+    queryRaw.mockResolvedValue([{ homeScore: 3, awayScore: 1, internacionalIsHome: false }])
+
+    const response = await matchRoutes.handle(new Request('http://localhost/matches/statistics?year=2025'))
+
+    expect(await response.json()).toMatchObject({
+      summary: { wins: 0, losses: 1, goalsScored: 1, goalsConceded: 3, goalDifference: -2 },
+    })
+  })
+
+  it('returns a Zero-Match Performance Summary for a valid search', async () => {
+    queryRaw.mockResolvedValue([])
+
+    const response = await matchRoutes.handle(new Request('http://localhost/matches/statistics?year=2025'))
+
+    expect(await response.json()).toEqual({
+      status: 'success',
+      summary: {
+        matchesPlayed: 0, wins: 0, draws: 0, losses: 0,
+        goalsScored: 0, goalsConceded: 0, goalDifference: 0,
+        winRate: 0, cleanSheets: 0,
+      },
+    })
+  })
+
+  it('rejects malformed Match Statistics filters before reading Matches', async () => {
+    const response = await matchRoutes.handle(new Request('http://localhost/matches/statistics?year=invalid'))
+
+    expect(response.status).toBe(422)
+    expect(queryRaw).not.toHaveBeenCalled()
+  })
+
+  it('accepts every independent Match Statistics Filter', async () => {
+    queryRaw.mockResolvedValue([])
+
+    const response = await matchRoutes.handle(new Request('http://localhost/matches/statistics?year=2025&month=1&team=Gr%C3%AAmio&league=Brasileir%C3%A3o'))
+
+    expect(response.status).toBe(200)
+    expect(await response.json()).toMatchObject({ summary: { matchesPlayed: 0 } })
+  })
+
+  it('rejects non-filter Match Statistics query criteria before reading Matches', async () => {
+    const response = await matchRoutes.handle(new Request('http://localhost/matches/statistics?year=2025&cursor=page-2'))
+
+    expect(response.status).toBe(400)
+    expect(queryRaw).not.toHaveBeenCalled()
+  })
+
   it('returns the finished-Match filter catalogue', async () => {
     queryRaw.mockResolvedValueOnce([{ year: '2025' }]).mockResolvedValueOnce([{ team: 'Internacional' }])
     findMany.mockResolvedValue([{ league: 'Brasileirão' }])
