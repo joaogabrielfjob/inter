@@ -68,6 +68,7 @@ describe('MatchStatistics', () => {
   it('shows every Complete Performance Summary measure as numeric cards', async () => {
     renderMatchStatistics('/estatisticas?ano=2025');
 
+    expect(screen.getByText('Cobertura dos dados: de 2020 até o presente.')).toBeInTheDocument();
     expect(await screen.findByText('Partidas jogadas')).toBeInTheDocument();
     expect(screen.getByText('21')).toBeInTheDocument();
     expect(screen.getByText('Vitórias, empates e derrotas')).toBeInTheDocument();

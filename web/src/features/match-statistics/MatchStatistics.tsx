@@ -63,6 +63,7 @@ function MatchStatisticsContent({ confirmedSearch, setSearchParams }: MatchStati
           {isLoading ? <LoaderCircle className='animate-spin' /> : <SearchIcon />}
         </Button>
       </div>
+      <p className='mb-6 text-sm text-muted-foreground'>Cobertura dos dados: de 2020 até o presente.</p>
       {filtersQuery.isError || summaryQuery.isError ? (
         <RequestError onRetry={() => void Promise.all([filtersQuery.refetch(), summaryQuery.refetch()])} />
       ) : summary ? <SummaryCards summary={summary} /> : <div aria-label='Carregando estatísticas' />}
